@@ -45,7 +45,7 @@ def index():
 
 @app.route('/success')
 def success():
-    return "Form submitted successfully!"
+    return render_template('pano.html')
 
 
 def formatted_address(csv_filename):
@@ -69,6 +69,52 @@ def formatted_address(csv_filename):
     locations['approx-address'] = approx_address
     print(csv_filename)
     locations.to_csv('outputs/'+ csv_filename, index=False)
+    pano(csv_filename)
+
+def pano(csv_filename):
+    locations_pano = pd.read_csv('outputs/' + csv_filename)
+    headings = [0, 90, 180, 270]
+    locations_pano['img_source'] = locations_pano['approx-address']
+    for i in range(0, len(locations_pano)):
+        lat1 = locations_pano.iloc[i]['latitude (deg)']
+        long1 = locations_pano.iloc[i]['longitude (deg)']
+        address = locations_pano.iloc[i]['approx-address']
+        for heading in headings:
+            input_heading = heading
+            url = "https://maps.googleapis.com/maps/api/streetview?location={},{}&size=640x640&pitch=0&fov=90&heading={}&key=AIzaSyBwP_5ZGFGEhgo1Zc9cxW5l2jjEz5-gd1o".format(lat1, long1, input_heading)
+            response = requests.get(url,stream=True)
+            if response.status_code == 200:
+                with open(f"standalone_images/{heading}.jpg", "wb") as f:
+                    response.raw.decode_content = True
+                    shutil.copyfileobj(response.raw, f)
+
+    ## CREATING PANO IMAGE BY STITCHING
+        filenames = ["standalone_images/0.jpg", "standalone_images/90.jpg", "standalone_images/180.jpg", "standalone_images/270.jpg"]
+
+        images = [Image.open(filename) for filename in filenames]
+        widths, heights = zip(*(i.size for i in images))
+
+        total_width = sum(widths)
+        max_height = max(heights)
+
+        pano_image = Image.new("RGB", (total_width, max_height), color="white")
+
+        x_offset = 0
+        for x, image in enumerate(images):
+            pano_image.paste(image, (x_offset, 0))
+            x_offset += widths[x]
+        ## OUTPUTTING PANO IMAGES WITH ADDRESS NAME AS FILE NAME
+        filename = str(i) +'.jpg'
+        pano_image.save('pano_images/' + filename)
+        locations_pano['img_source'].iloc[i] = '<img src="pano_images/{}" height="320" width="1280">'.format(filename)
+
+    # TO HTML
+    locations_html = locations_pano.drop(columns=['GPS week', 'GPS second', 'solution status', 'height (m)'])
+    result_html = locations_html.to_html()
+    result_html_replaced = result_html.replace('&lt;','<').replace('&gt;','>')
+    text_file = open('templates/pano.html', "w")
+    text_file.write(result_html_replaced)
+    text_file.close()
 
 if __name__ == '__main__':
     app.run(debug=True)
