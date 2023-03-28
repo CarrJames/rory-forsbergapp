@@ -16,8 +16,7 @@ from IPython.display import HTML
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'secret_key'
-UPLOAD_FOLDER = '/uploads/csv'
-app.config['UPLOADED_CSV_DEST'] = UPLOAD_FOLDER
+app.config['UPLOADED_CSV_DEST'] = 'uploads/csv'
 
 csv_uploads = UploadSet('csv')
 configure_uploads(app, csv_uploads)
@@ -38,7 +37,8 @@ def index():
         username = form.username.data
         email = form.email.data
         csv_filename = csv_uploads.save(form.csv_file.data)
-        formatted_address('uploads\csv\{csv_filename}')
+        print(csv_filename)
+        ##formatted_address(f'uploads/csv/{csv_filename}')
         return redirect(url_for('success'))
     return render_template('index.html', form=form)
 
