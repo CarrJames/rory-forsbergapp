@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+    <div class="column is-5 is-offset-4">
+        <h3 class="title is-3">Register</h3>
+        <div class="box">
+                <form method="POST" method="post" enctype="multipart/form-data">
+                    <div class="field">
+                        {{ form.csrf_token() }}
+                        <div class="control">
+                            {{form.username(class="input", placeholder="Username")}}
+                            {% for error in form.username.errors %}
+                                {{ error }}
+                            {% endfor %}
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="control">
+                            {{form.email(class="input", placeholder="Email")}}
+                            {% for error in form.email.errors %}
+                                {{ error }}
+                            {% endfor %}
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="control">
+                            {{form.csv_file(class="input", placeholder="CSV File")}}
+                            {% for error in form.csv_file.errors %}
+                                {{ error }}
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {{form.submit(class="button is-block is-info is-fullwidth")}}
+                </form>
+        </div>
+    </div>
+
+{% endblock %}
