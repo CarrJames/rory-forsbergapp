@@ -37,8 +37,9 @@ def index():
         username = form.username.data
         email = form.email.data
         csv_filename = csv_uploads.save(form.csv_file.data)
-        print(csv_filename)
-        ##formatted_address(f'uploads/csv/{csv_filename}')
+
+        #GETTING THE ADRESSES
+        formatted_address(csv_filename)
         return redirect(url_for('success'))
     return render_template('index.html', form=form)
 
@@ -48,7 +49,7 @@ def success():
 
 
 def formatted_address(csv_filename):
-    locations = pd.read_csv(csv_filename)
+    locations = pd.read_csv('uploads/csv/' + csv_filename)
     gmaps = googlemaps.Client(key='AIzaSyBwP_5ZGFGEhgo1Zc9cxW5l2jjEz5-gd1o')
 
     approx_address = []
@@ -67,7 +68,7 @@ def formatted_address(csv_filename):
 
     locations['approx-address'] = approx_address
     print(csv_filename)
-    locations.to_csv(csv_filename + '.csv', index=False)
+    locations.to_csv('outputs/'+ csv_filename, index=False)
 
 if __name__ == '__main__':
     app.run(debug=True)
