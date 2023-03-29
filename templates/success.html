@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+    <div class="column is-5 is-offset-4">
+        <h3 class="title is-3">FILE FORMATTED</h3>
+        <form action="{{ url_for('send_email') }}" method="POST">
+            <input type="submit" value="Send Email">
+        </form>
+        <br>
+        <form action="{{ url_for('formatted') }}">
+            <input type="submit" value="Formatted Page">
+        </form>
+    </div>
+{% endblock %}

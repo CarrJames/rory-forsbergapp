@@ -13,6 +13,7 @@ import requests
 import shutil
 from PIL import Image
 from IPython.display import HTML
+import smtplib, ssl
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'secret_key'
@@ -52,7 +53,9 @@ def formatted():
 def success():
     return render_template('success.html')
 
-
+#@app.route('/send_email', methods=['POST'])
+#def send_email():
+       
 @app.before_first_request
 def empty_folders():
     upload_folder = app.config['UPLOAD_FOLDER'] = os.path.join(os.getcwd(), 'uploads', 'csv')
@@ -139,3 +142,18 @@ def pano(csv_filename):
 
 if __name__ == '__main__':
     app.run(debug=True)
+
+
+@app.errorhandler(403)
+def page_forbidden(error):
+    return render_template('403.html'), 403
+
+
+@app.errorhandler(404)
+def page_not_found(error):
+    return render_template('404.html'), 404
+
+
+@app.errorhandler(500)
+def internal_error(error): 
+    return render_template('500.html'), 500
