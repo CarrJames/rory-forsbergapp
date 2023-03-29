@@ -43,9 +43,28 @@ def index():
         return redirect(url_for('success'))
     return render_template('index.html', form=form)
 
+@app.route('/formatted')
+def formatted():
+    return render_template('pano.html')
+
+
 @app.route('/success')
 def success():
-    return render_template('pano.html')
+    return render_template('success.html')
+
+
+@app.before_first_request
+def empty_folders():
+    upload_folder = app.config['UPLOAD_FOLDER'] = os.path.join(os.getcwd(), 'uploads', 'csv')
+    temp_folder = app.config['static'] = os.path.join(os.getcwd(), 'static')
+    for folder in [upload_folder, temp_folder]:
+        for filename in os.listdir(folder):
+            file_path = os.path.join(folder, filename)
+            try:
+                if os.path.isfile(file_path) or os.path.islink(file_path):
+                    os.unlink(file_path)
+            except Exception as e:
+                print('Failed to delete %s. Reason: %s' % (file_path, e))
 
 
 def formatted_address(csv_filename):
@@ -105,8 +124,10 @@ def pano(csv_filename):
             x_offset += widths[x]
         ## OUTPUTTING PANO IMAGES WITH ADDRESS NAME AS FILE NAME
         filename = str(i) +'.jpg'
-        pano_image.save('pano_images/' + filename)
-        locations_pano['img_source'].iloc[i] = '<img src="pano_images/{}" height="320" width="1280">'.format(filename)
+        pano_image.save('static/' + filename)
+        width = 1280
+        height = 320
+        locations_pano['img_source'].iloc[i] = r"<img src='{{ url_for('static', filename=" + repr(filename) + ") }}'>"
 
     # TO HTML
     locations_html = locations_pano.drop(columns=['GPS week', 'GPS second', 'solution status', 'height (m)'])
