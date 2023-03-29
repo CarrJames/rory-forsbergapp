@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, url_for
+from flask import Flask, render_template, request, redirect, url_for, session
 from flask_wtf import FlaskForm
 from flask_wtf.file import FileField, FileRequired, FileAllowed
 from wtforms import StringField, SubmitField
@@ -7,8 +7,8 @@ from flask_uploads import UploadSet, configure_uploads
 import pandas as pd
 import googlemaps
 import json
+from flask_login import login_required
 import os
-from io import StringIO
 import requests
 import shutil
 from PIL import Image
@@ -18,7 +18,6 @@ import smtplib, ssl
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'secret_key'
 app.config['UPLOADED_CSV_DEST'] = 'uploads/csv'
-
 csv_uploads = UploadSet('csv')
 configure_uploads(app, csv_uploads)
 
@@ -33,14 +32,15 @@ class MyForm(FlaskForm):
 
 @app.route('/', methods=['GET', 'POST'])
 def index():
+    session['logged_in'] = False
     form = MyForm()
     if form.validate_on_submit():
         username = form.username.data
         email = form.email.data
         csv_filename = csv_uploads.save(form.csv_file.data)
-
         #GETTING THE ADRESSES
         formatted_address(csv_filename)
+        session['logged_in'] = True
         return redirect(url_for('success'))
     return render_template('index.html', form=form)
 
@@ -53,13 +53,14 @@ def formatted():
 def success():
     return render_template('success.html')
 
-#@app.route('/send_email', methods=['POST'])
-#def send_email():
+@app.route('/send_email', methods=['POST'])
+def send_email():
+    return 'SEND EMAIL'
        
 @app.before_first_request
 def empty_folders():
     upload_folder = app.config['UPLOAD_FOLDER'] = os.path.join(os.getcwd(), 'uploads', 'csv')
-    temp_folder = app.config['static'] = os.path.join(os.getcwd(), 'static')
+    temp_folder = app.config['TEMP_FOLDER'] = os.path.join(os.getcwd(), 'static')
     for folder in [upload_folder, temp_folder]:
         for filename in os.listdir(folder):
             file_path = os.path.join(folder, filename)
@@ -137,23 +138,13 @@ def pano(csv_filename):
     result_html = locations_html.to_html()
     result_html_replaced = result_html.replace('&lt;','<').replace('&gt;','>')
     text_file = open('templates/pano.html', "w")
+    text_file.write('{% extends "base.html" %}')
+    text_file.write('{% block content %}')
     text_file.write(result_html_replaced)
+    text_file.write('{% endblock %}')
     text_file.close()
 
 if __name__ == '__main__':
     app.run(debug=True)
 
 
-@app.errorhandler(403)
-def page_forbidden(error):
-    return render_template('403.html'), 403
-
-
-@app.errorhandler(404)
-def page_not_found(error):
-    return render_template('404.html'), 404
-
-
-@app.errorhandler(500)
-def internal_error(error): 
-    return render_template('500.html'), 500
