@@ -5,6 +5,9 @@ from wtforms import StringField, SubmitField
 from wtforms.validators import DataRequired, Email
 from flask_uploads import UploadSet, configure_uploads
 import pandas as pd
+from flask_sqlalchemy import SQLAlchemy
+from docx import Document
+from docx.shared import Inches
 import googlemaps
 import json
 from flask_login import login_required
@@ -18,6 +21,12 @@ import smtplib, ssl
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'secret_key'
 app.config['UPLOADED_CSV_DEST'] = 'uploads/csv'
+#   DATABASE CONFIGURATION
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///userlogs.db'
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+db = SQLAlchemy(app)
+
+#   FILE UPLOAD CONFIGURATION
 csv_uploads = UploadSet('csv')
 configure_uploads(app, csv_uploads)
 
@@ -132,7 +141,7 @@ def pano(csv_filename):
         width = 1280
         height = 320
         locations_pano['img_source'].iloc[i] = r"<img src='{{ url_for('static', filename=" + repr(filename) + ") }}'>"
-
+    to_word(locations_pano)
     # TO HTML
     locations_html = locations_pano.drop(columns=['GPS week', 'GPS second', 'solution status', 'height (m)'])
     result_html = locations_html.to_html()
@@ -143,6 +152,26 @@ def pano(csv_filename):
     text_file.write(result_html_replaced)
     text_file.write('{% endblock %}')
     text_file.close()
+
+def to_word(locations_pano):
+    doc = Document()
+
+# add a table to the document
+    table = doc.add_table(rows=1, cols=len(locations_pano.columns))
+
+# add the header row
+    header = table.rows[0].cells
+    for i in range(len(locations_pano.columns)):
+        header[i].text = locations_pano.columns[i]
+
+# add the data rows
+    for index, row in locations_pano.iterrows():
+        row_cells = table.add_row().cells
+        for i in range(len(locations_pano.columns)):
+            row_cells[i].text = str(row[i])
+
+# save the document to a file
+    doc.save('output.docx')
 
 if __name__ == '__main__':
     app.run(debug=True)

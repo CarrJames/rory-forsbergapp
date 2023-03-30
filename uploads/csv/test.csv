@@ -1,0 +1,3 @@
+GPS week,GPS second,solution status,latitude (deg),longitude (deg),height (m)
+2236,28585,SOL_COMPUTED,51.56999472,0.126908117,13.0445
+2236,28586,SOL_COMPUTED,51.57003586,0.127068845,12.9986
