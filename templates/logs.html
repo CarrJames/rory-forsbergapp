@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+    <div class="column is-5 is-offset-4">
+        <h3 class="title is-3">Logs</h3>
+        <table border="2" class="dataframe">
+            <tr>
+                <th>ID</th>
+                <th>Username</th>
+                <th>Email</th>
+                <th>Inputted File</th>
+                <th>Added</th>
+            </tr>
+            {% for row in data %}
+            <tr>
+                <td>{{ row.id }}</td>
+                <td>{{ row.username }}</td>
+                <td>{{ row.email }}</td>
+                <td>{{ row.csv_file }}</td>
+                <td>{{ row.added }}</td>
+            </tr>
+            {% endfor %}
+    </div>
+{% endblock %}

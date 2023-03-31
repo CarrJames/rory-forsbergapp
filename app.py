@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, url_for, session
+from flask import Flask, render_template, request, redirect, url_for, session, flash
 from flask_wtf import FlaskForm
 from flask_wtf.file import FileField, FileRequired, FileAllowed
 from wtforms import StringField, SubmitField
@@ -19,7 +19,6 @@ from PIL import Image
 from IPython.display import HTML
 import smtplib, ssl
 
-
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'secret_key'
 app.config['UPLOADED_CSV_DEST'] = 'uploads/csv'
@@ -30,6 +29,26 @@ db = SQLAlchemy(app)
 #   FILE UPLOAD CONFIGURATION
 csv_uploads = UploadSet('csv')
 configure_uploads(app, csv_uploads)
+
+class User(db.Model):
+    __tablename__ = 'userlogs'
+    id = db.Column(db.Integer, primary_key=True)
+    username = db.Column(db.String(20))
+    email = db.Column(db.String(100))
+    csv_file = db.Column(db.String(100), nullable=False)
+    added = db.Column(db.DateTime, default=datetime.now)
+
+    def __init__(self, username, email, csv_file):
+        self.username = username
+        self.email = email
+        self.csv_file = csv_file
+
+def init_db():
+    db.drop_all()
+    db.create_all()
+    new_user = User(username='user1', email='test@test.com', csv_file='test.csv')
+    db.session.add(new_user)    
+    db.session.commit()
 
 class MyForm(FlaskForm):
     username = StringField('Username', validators=[DataRequired()])
@@ -49,6 +68,9 @@ def index():
         email = form.email.data
         csv_filename = csv_uploads.save(form.csv_file.data)
         #GETTING THE ADRESSES
+        new_user = User(username=form.username.data, email=form.email.data, csv_file=csv_filename)
+        db.session.add(new_user)
+        db.session.commit()   
         formatted_address(csv_filename)
         session['logged_in'] = True
 
@@ -63,6 +85,13 @@ def formatted():
 @app.route('/success')
 def success():
     return render_template('success.html')
+
+
+@app.route('/logs')
+def logs():
+    data=User.query.all()
+    return render_template('logs.html', data=data)
+
 
 @app.route('/send_email', methods=['POST'])
 def send_email():
