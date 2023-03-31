@@ -8,16 +8,13 @@ import pandas as pd
 from flask_sqlalchemy import SQLAlchemy
 from docx import Document
 from docx.shared import Inches
-import googlemaps
-import json
 from flask_login import login_required
-import os
-import requests
+import os, requests, shutil, json, googlemaps, smtplib, ssl
 from datetime import datetime
-import shutil
 from PIL import Image
 from IPython.display import HTML
-import smtplib, ssl
+from email.message import EmailMessage
+
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'secret_key'
@@ -95,8 +92,30 @@ def logs():
 
 @app.route('/send_email', methods=['POST'])
 def send_email():
-    return 'SEND EMAIL'
-       
+    email_sender = 'disformatter@gmail.com'
+    email_password = 'bqcwnzqvxhcryylq'
+    email_reciever = 'roryfmc@gmail.com'
+
+    subject = 'Document of Formatted Addresses'
+    body = 'Please find the formatted addresses document attached.'
+
+    em = EmailMessage()
+
+    em['From'] = email_sender
+    em['To'] = email_reciever
+    em['Subject'] = subject
+    em.set_content(body)
+
+    with open('output.docx', 'rb') as f:
+        file_data = f.read()
+    em.add_attachment(file_data, maintype='application', subtype='vnd.openxmlformats-officedocument.wordprocessingml.document', filename='output.docx')
+    context = ssl.create_default_context()
+
+    with smtplib.SMTP_SSL('smtp.gmail.com', 465, context=context) as smtp:
+        smtp.login(email_sender, email_password)
+        smtp.sendmail(email_sender, email_reciever, em.as_string())
+        return('email sent')
+
 @app.before_first_request
 def empty_folders():
     upload_folder = app.config['UPLOAD_FOLDER'] = os.path.join(os.getcwd(), 'uploads', 'csv')
@@ -202,7 +221,7 @@ def to_word(csv_filename):
         image_cell = row_cells[-1]
         image_cell.add_paragraph().add_run().add_picture('static/' + str(index) + '.jpg', width=Inches(4.0), height=Inches(1.8))
 
-    doc.save('outputs/' + csv_filename+'.docx')
+    doc.save('output.docx')
 
 if __name__ == '__main__':
     app.run(debug=True)
