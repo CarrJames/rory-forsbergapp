@@ -13,10 +13,12 @@ import json
 from flask_login import login_required
 import os
 import requests
+from datetime import datetime
 import shutil
 from PIL import Image
 from IPython.display import HTML
 import smtplib, ssl
+
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'secret_key'
@@ -25,7 +27,6 @@ app.config['UPLOADED_CSV_DEST'] = 'uploads/csv'
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///userlogs.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
-
 #   FILE UPLOAD CONFIGURATION
 csv_uploads = UploadSet('csv')
 configure_uploads(app, csv_uploads)
@@ -50,6 +51,7 @@ def index():
         #GETTING THE ADRESSES
         formatted_address(csv_filename)
         session['logged_in'] = True
+
         return redirect(url_for('success'))
     return render_template('index.html', form=form)
 
@@ -141,7 +143,7 @@ def pano(csv_filename):
         width = 1280
         height = 320
         locations_pano['img_source'].iloc[i] = r"<img src='{{ url_for('static', filename=" + repr(filename) + ") }}'>"
-    to_word(locations_pano)
+    to_word(csv_filename)
     # TO HTML
     locations_html = locations_pano.drop(columns=['GPS week', 'GPS second', 'solution status', 'height (m)'])
     result_html = locations_html.to_html()
@@ -153,25 +155,25 @@ def pano(csv_filename):
     text_file.write('{% endblock %}')
     text_file.close()
 
-def to_word(locations_pano):
+def to_word(csv_filename):
+    locations_toword = pd.read_csv('outputs/' + csv_filename)
+    locations_toword = locations_toword.drop(columns=['GPS week', 'GPS second', 'solution status', 'height (m)'])
     doc = Document()
+    table = doc.add_table(rows=1, cols=len(locations_toword.columns))
 
-# add a table to the document
-    table = doc.add_table(rows=1, cols=len(locations_pano.columns))
-
-# add the header row
     header = table.rows[0].cells
-    for i in range(len(locations_pano.columns)):
-        header[i].text = locations_pano.columns[i]
+    for i in range(len(locations_toword.columns)):
+        header[i].text = locations_toword.columns[i]
+    header[-1].text = 'Image'
 
-# add the data rows
-    for index, row in locations_pano.iterrows():
+    for index, row in locations_toword.iterrows():
         row_cells = table.add_row().cells
-        for i in range(len(locations_pano.columns)):
+        for i in range(len(locations_toword.columns)):
             row_cells[i].text = str(row[i])
+        image_cell = row_cells[-1]
+        image_cell.add_paragraph().add_run().add_picture('static/' + str(index) + '.jpg', width=Inches(4.0), height=Inches(1.8))
 
-# save the document to a file
-    doc.save('output.docx')
+    doc.save('outputs/' + csv_filename+'.docx')
 
 if __name__ == '__main__':
     app.run(debug=True)
