@@ -47,6 +47,15 @@ def init_db():
     db.session.add(new_user)    
     db.session.commit()
 
+@app.route('/clear_db', methods=['POST'])
+def clear_db():
+    all_users = db.session.query(User).all()
+    
+    for user in all_users:
+        db.session.delete(user)
+    db.session.commit()
+    return render_template('logs.html')
+
 class MyForm(FlaskForm):
     username = StringField('Username', validators=[DataRequired()])
     email = StringField('Email', validators=[DataRequired(), Email()])
@@ -68,9 +77,9 @@ def index():
         new_user = User(username=form.username.data, email=form.email.data, csv_file=csv_filename)
         db.session.add(new_user)
         db.session.commit()   
+        session['email'] = email
         formatted_address(csv_filename)
         session['logged_in'] = True
-
         return redirect(url_for('success'))
     return render_template('index.html', form=form)
 
@@ -78,11 +87,9 @@ def index():
 def formatted():
     return render_template('pano.html')
 
-
 @app.route('/success')
 def success():
     return render_template('success.html')
-
 
 @app.route('/logs')
 def logs():
@@ -94,7 +101,7 @@ def logs():
 def send_email():
     email_sender = 'disformatter@gmail.com'
     email_password = 'bqcwnzqvxhcryylq'
-    email_reciever = 'roryfmc@gmail.com'
+    email_reciever = session.get('email')
 
     subject = 'Document of Formatted Addresses'
     body = 'Please find the formatted addresses document attached.'
@@ -114,7 +121,7 @@ def send_email():
     with smtplib.SMTP_SSL('smtp.gmail.com', 465, context=context) as smtp:
         smtp.login(email_sender, email_password)
         smtp.sendmail(email_sender, email_reciever, em.as_string())
-        return('email sent')
+    return render_template('sent.html')
 
 @app.before_first_request
 def empty_folders():
