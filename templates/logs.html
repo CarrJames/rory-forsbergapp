@@ -4,7 +4,11 @@
 
     <div class="column is-5 is-offset-4">
         <h3 class="title is-3">Logs</h3>
-        <table border="2" class="dataframe">
+        <form action="{{ url_for('clear_db') }}" method="POST">
+            <input class="button is-block is-info is-fullwidth" type="submit" value="Clear Database">
+        </form>
+        <br>
+        <table border="2" class="dataframe is-centered">
             <tr>
                 <th>ID</th>
                 <th>Username</th>
