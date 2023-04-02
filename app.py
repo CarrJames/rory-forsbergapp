@@ -9,11 +9,17 @@ from flask_sqlalchemy import SQLAlchemy
 from docx import Document
 from docx.shared import Inches
 from flask_login import login_required
-import os, requests, shutil, json, googlemaps, smtplib, ssl
+import os, requests, shutil, json, googlemaps, smtplib, ssl, folium
 from datetime import datetime
 from PIL import Image
 from IPython.display import HTML
 from email.message import EmailMessage
+import geopandas as gpd
+import geopy.distance
+from rtree import index
+from shapely.geometry import Point
+import pandas as pd
+import pickle
 
 
 app = Flask(__name__)
@@ -78,6 +84,7 @@ def index():
         db.session.add(new_user)
         db.session.commit()   
         session['email'] = email
+        session['csv_filename'] = csv_filename
         formatted_address(csv_filename)
         session['logged_in'] = True
         return redirect(url_for('success'))
@@ -96,6 +103,52 @@ def logs():
     data=User.query.all()
     return render_template('logs.html', data=data)
 
+@app.route('/celldist')
+def celldist():
+    # Getting the cell tower dataframe
+    
+    column_names = ['latitude', 'longitude']
+    df = pd.read_csv(r'C:\Users\Rory\application\celltowers\234.csv', names=column_names, header=None)
+    # Converting it to a geopandas df
+    gdf = gpd.GeoDataFrame(df, geometry=gpd.points_from_xy(df.longitude, df.latitude))
+    idx = index.Index()
+    for i, tower in gdf.iterrows():
+        if tower.geometry is not None:
+            idx.insert(i, tower.geometry.bounds)
+    coords_filename = f'uploads/csv/{session.get("csv_filename")}'
+    coords_df = pd.read_csv(coords_filename)
+    result_df = find_closest_towers(coords_df, gdf, idx)
+    print(result_df)
+    results = pd.DataFrame (result_df, columns = ['latitude', 'longitude', 'geometry'])
+    results.to_csv('results.csv')
+
+    # mapping the locations usin folium
+    fg1 = folium.FeatureGroup(name='Markers 1', show=False)
+    for i, row in results.iterrows():
+        folium.Marker(location=[row['latitude'], row['longitude']],
+                    tooltip=f"ID: {i}",
+                    icon=folium.Icon(color='red')
+                    ).add_to(fg1)
+    
+    # Create a feature group for the second set of markers (green color)
+    m = folium.Map(zoom_start=5)
+    fg2 = folium.FeatureGroup(name='Markers 2', show=False)
+    for i, row in coords_df.iterrows():
+        folium.Marker(location=[row['latitude (deg)'], row['longitude (deg)']],  # offset the location for demo purposes
+                    tooltip=f"ID: {i}",
+                    icon=folium.Icon(color='green')
+                    ).add_to(fg2)
+
+    # Add the feature groups to the map object
+    fg1.add_to(m)
+    fg2.add_to(m)
+
+    # Add a layer control to the map object to toggle the feature groups
+    folium.LayerControl().add_to(m)
+
+    # Display the map object
+    map_html = m.get_root().render()
+    return render_template('celltowers.html', map_html=map_html)
 
 @app.route('/send_email', methods=['POST'])
 def send_email():
@@ -210,6 +263,24 @@ def pano(csv_filename):
     text_file.write('{% endblock %}')
     text_file.close()
 
+def find_closest_towers(coords_df, gdf, idx):
+    closest_towers = []
+    for i, row in coords_df.iterrows():
+        point = Point(row['longitude (deg)'], row['latitude (deg)'])
+        # Get indices of candidate towers from spatial index
+        candidate_indices = list(idx.nearest(point.bounds))
+        # Calculate distances to candidate towers and find closest one
+        closest_distance = float('inf')
+        closest_tower = None
+        for i in candidate_indices:
+            tower = gdf.iloc[i]
+            distance = point.distance(tower.geometry)
+            if distance < closest_distance:
+                closest_distance = distance
+                closest_tower = tower
+        closest_towers.append(closest_tower)
+    return closest_towers
+
 def to_word(csv_filename):
     locations_toword = pd.read_csv('outputs/' + csv_filename)
     locations_toword = locations_toword.drop(columns=['GPS week', 'GPS second', 'solution status', 'height (m)'])
@@ -232,5 +303,3 @@ def to_word(csv_filename):
 
 if __name__ == '__main__':
     app.run(debug=True)
-
-
