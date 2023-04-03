@@ -1,3 +1,5 @@
 GPS week,GPS second,solution status,latitude (deg),longitude (deg),height (m),approx-address
 2236,28585,SOL_COMPUTED,51.56999472,0.126908117,13.0445,"1145 High Rd, Romford RM6 4AT, UK"
 2236,28586,SOL_COMPUTED,51.57003586,0.127068845,12.9986,"Chadwell Arms, 1149 High Rd, Romford RM6 4AT, UK"
+2236,28877,SOL_COMPUTED,51.5655476,0.145797412,10.9858,"126 Whalebone Ln S, Dagenham RM8 1BA, UK"
+2236,28925,SOL_COMPUTED,51.56151092,0.147899381,19.2013,"Meadway Court, Whalebone Ln S, Dagenham RM8 1AD, UK"

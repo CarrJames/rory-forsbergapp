@@ -32,7 +32,8 @@ db = SQLAlchemy(app)
 #   FILE UPLOAD CONFIGURATION
 csv_uploads = UploadSet('csv')
 configure_uploads(app, csv_uploads)
-
+# Spatial Index 
+idx = index.Index()
 class User(db.Model):
     __tablename__ = 'userlogs'
     id = db.Column(db.Integer, primary_key=True)
@@ -105,13 +106,10 @@ def logs():
 
 @app.route('/celldist')
 def celldist():
-    # Getting the cell tower dataframe
-    
     column_names = ['latitude', 'longitude']
-    df = pd.read_csv(r'C:\Users\Rory\application\celltowers\234.csv', names=column_names, header=None)
+    df = pd.read_csv(r'C:\Users\Rory\Desktop\UNI3\dis-test\cell-tower\234.csv', names=column_names, header=None)
     # Converting it to a geopandas df
     gdf = gpd.GeoDataFrame(df, geometry=gpd.points_from_xy(df.longitude, df.latitude))
-    idx = index.Index()
     for i, tower in gdf.iterrows():
         if tower.geometry is not None:
             idx.insert(i, tower.geometry.bounds)
@@ -119,10 +117,10 @@ def celldist():
     coords_df = pd.read_csv(coords_filename)
     result_df = find_closest_towers(coords_df, gdf, idx)
     print(result_df)
-    results = pd.DataFrame (result_df, columns = ['latitude', 'longitude', 'geometry'])
+    results = pd.DataFrame(result_df, columns=['latitude', 'longitude', 'geometry'])
     results.to_csv('results.csv')
-
-    # mapping the locations usin folium
+    # mapping it using folium 
+    m = folium.Map(zoom_start=13)
     fg1 = folium.FeatureGroup(name='Markers 1', show=False)
     for i, row in results.iterrows():
         folium.Marker(location=[row['latitude'], row['longitude']],
@@ -130,8 +128,7 @@ def celldist():
                     icon=folium.Icon(color='red')
                     ).add_to(fg1)
     
-    # Create a feature group for the second set of markers (green color)
-    m = folium.Map(zoom_start=5)
+# Create a feature group for the second set of markers (green color)
     fg2 = folium.FeatureGroup(name='Markers 2', show=False)
     for i, row in coords_df.iterrows():
         folium.Marker(location=[row['latitude (deg)'], row['longitude (deg)']],  # offset the location for demo purposes
@@ -139,16 +136,15 @@ def celldist():
                     icon=folium.Icon(color='green')
                     ).add_to(fg2)
 
-    # Add the feature groups to the map object
+# Add the feature groups to the map object
     fg1.add_to(m)
     fg2.add_to(m)
 
-    # Add a layer control to the map object to toggle the feature groups
+# Add a layer control to the map object to toggle the feature groups
     folium.LayerControl().add_to(m)
-
-    # Display the map object
     map_html = m.get_root().render()
-    return render_template('celltowers.html', map_html=map_html)
+    return render_template('celltowers.html', map=map_html)
+    
 
 @app.route('/send_email', methods=['POST'])
 def send_email():
