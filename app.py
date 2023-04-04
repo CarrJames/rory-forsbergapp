@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, url_for, session, flash
+from flask import Flask, render_template, request, redirect, url_for, session, send_file
 from flask_wtf import FlaskForm
 from flask_wtf.file import FileField, FileRequired, FileAllowed
 from wtforms import StringField, SubmitField
@@ -9,17 +9,13 @@ from flask_sqlalchemy import SQLAlchemy
 from docx import Document
 from docx.shared import Inches
 from flask_login import login_required
-import os, requests, shutil, json, googlemaps, smtplib, ssl, folium
+import os, requests, shutil, json, googlemaps, smtplib, ssl, folium, pickle
 from datetime import datetime
 from PIL import Image
-from IPython.display import HTML
 from email.message import EmailMessage
 import geopandas as gpd
-import geopy.distance
 from rtree import index
 from shapely.geometry import Point
-import pandas as pd
-import pickle
 
 
 app = Flask(__name__)
@@ -87,9 +83,19 @@ def index():
         # adding the email and csv to the session so I can access them in different functions
         session['email'] = email
         session['csv_filename'] = csv_filename
-        formatted_address(csv_filename)
-        session['logged_in'] = True
-        return redirect(url_for('success'))
+        #checking columns are formatted correctly
+        locations = pd.read_csv('uploads/csv/' + csv_filename)
+        expected_columns = ['latitude (deg)', 'longitude (deg)']
+        # check if the DataFrame has all the expected columns
+        if set(expected_columns).issubset(set(locations.columns)):
+            print('inputted csv has correct columns')
+            formatted_address(csv_filename)
+            session['logged_in'] = True
+            return redirect(url_for('success'))
+        else:
+            print('inputted csv has inccorect columns')
+            return render_template('error.html')
+        
     return render_template('index.html', form=form)
 # returning full page of pano images
 @app.route('/formatted')
@@ -98,7 +104,15 @@ def formatted():
 
 @app.route('/success')
 def success():
-    return render_template('success.html')
+    file_size = os.path.getsize('output.docx')
+    print(file_size)
+    # checking if the output document is larger than the allowed emailing file size
+    if file_size > 25000000:
+        print('file size over 25mb')
+        return render_template('success.html', button_disabled=True)
+    else:
+        print('file size under 25mb')
+        return render_template('success.html', button_disabled=False)
 # shows database entries
 @app.route('/logs')
 def logs():
@@ -108,7 +122,7 @@ def logs():
 @app.route('/celldist')
 def celldist():
     column_names = ['latitude', 'longitude']
-    df = pd.read_csv(r'C:\Users\Rory\Desktop\UNI3\dis-test\cell-tower\234-revised.csv', names=column_names, header=None)
+    df = pd.read_csv(r'celltowers\234.csv', names=column_names, header=None)
     # Converting it to a geopandas df
     gdf = gpd.GeoDataFrame(df, geometry=gpd.points_from_xy(df.longitude, df.latitude))
     for i, tower in gdf.iterrows():
@@ -169,7 +183,12 @@ def send_email():
         smtp.login(email_sender, email_password)
         smtp.sendmail(email_sender, email_reciever, em.as_string())
     return render_template('sent.html')
-# empties the uploads folder and the static folder to reduce application size
+
+@app.route('/download', methods=['POST'])
+def download():
+    return send_file('output.docx', as_attachment=True)
+
+# empties the uploads folder and the static folder to reduce application size    
 @app.before_first_request
 def empty_folders():
     upload_folder = app.config['UPLOAD_FOLDER'] = os.path.join(os.getcwd(), 'uploads', 'csv')
@@ -189,7 +208,7 @@ def formatted_address(csv_filename):
     gmaps = googlemaps.Client(key='AIzaSyBwP_5ZGFGEhgo1Zc9cxW5l2jjEz5-gd1o')
 
     approx_address = []
-
+    # putting the lat and long to the api
     for i in range(0,len(locations)):
         loc1 = locations[['latitude (deg)', 'longitude (deg)']].iloc[i]
         reverse_geocode_result = gmaps.reverse_geocode((loc1['latitude (deg)'], loc1['longitude (deg)']))
@@ -247,9 +266,13 @@ def pano(csv_filename):
         locations_pano['img_source'].iloc[i] = r"<img src='{{ url_for('static', filename=" + repr(filename) + ") }}'>"
     to_word(csv_filename)
     # TO HTML
-    locations_html = locations_pano.drop(columns=['GPS week', 'GPS second', 'solution status', 'height (m)'])
+    # dropping possible columns
+    expected_columns = ['GPS week', 'GPS second', 'solution status', 'height (m)']
+        # check if the DataFrame has all the expected columns
+    if set(expected_columns).issubset(set(locations_pano.columns)):
+        locations_pano = locations_pano.drop(columns=['GPS week', 'GPS second', 'solution status', 'height (m)'])
     # putting the images together into a html file
-    result_html = locations_html.to_html()
+    result_html = locations_pano.to_html()
     result_html_replaced = result_html.replace('&lt;','<').replace('&gt;','>')
     text_file = open('templates/pano.html', "w")
     text_file.write('{% extends "base.html" %}')
@@ -280,7 +303,11 @@ def find_closest_towers(coords_df, gdf, idx):
 # formatting document in a word format
 def to_word(csv_filename):
     locations_toword = pd.read_csv('outputs/' + csv_filename)
-    locations_toword = locations_toword.drop(columns=['GPS week', 'GPS second', 'solution status', 'height (m)'])
+     # dropping possible columns
+    expected_columns = ['GPS week', 'GPS second', 'solution status', 'height (m)']
+        # check if the DataFrame has all the expected columns
+    if set(expected_columns).issubset(set(locations_toword.columns)):
+        locations_toword = locations_toword.drop(columns=['GPS week', 'GPS second', 'solution status', 'height (m)'])
     doc = Document()
     table = doc.add_table(rows=1, cols=len(locations_toword.columns))
 

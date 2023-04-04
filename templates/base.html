@@ -26,16 +26,23 @@
                 <div id="navbarMenuHeroA" class="navbar-menu">
                     <div class="navbar-end">
                         <a href="{{ url_for('index') }}" class="navbar-item">
-                            Input File Here
+                            Input New File Here
                         </a>
                         {% if session['logged_in'] %}
                         <a href="{{ url_for('formatted') }}" class="navbar-item">
-                            File Output
+                            Current File Output
                         </a>
                         {% endif %}
+                        {% if session['logged_in'] %}
                         <a href="{{ url_for('celldist')}}" class="navbar-item">
                             Find Closest Cell Mast (BETA)
                         </a>
+                        {% endif %}
+                        {% if session['logged_in'] %}
+                        <a href="{{ url_for('success') }}" class="navbar-item">
+                            Email File
+                        </a>
+                        {% endif %}
                         <a href="{{ url_for('logs') }}" class="navbar-item">
                             Logs
                         </a>

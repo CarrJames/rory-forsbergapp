@@ -4,8 +4,22 @@
 
     <div class="column is-5 is-offset-4">
         <h3 class="title is-3">FILE SUCCESSFULLY FORMATTED</h3>
+        {% if button_disabled %}
+        <form method="POST">
+            <input class="button is-block is-info is-fullwidth" value="Output File Is Too Large To Email">
+        </form>
+        <br>
+        <form action="{{ url_for('download') }}" method="POST">
+            <input class="button is-block is-info is-fullwidth" type="submit" value="Download File">
+        </form>
+        {% else %}
         <form action="{{ url_for('send_email') }}" method="POST">
-            <input class="button is-block is-info is-fullwidth" type="submit" value="Send Email">
+            <input class="button is-block is-info is-fullwidth" type="submit" value="Email File">
+        </form>
+        {% endif %}
+        <br>
+        <form action="{{ url_for('download') }}" method="POST">
+            <input class="button is-block is-info is-fullwidth" type="submit" value="Download File">
         </form>
         <br>
         <form action="{{ url_for('formatted') }}">
