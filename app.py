@@ -31,12 +31,13 @@ configure_uploads(app, csv_uploads)
 # Spatial Index configuration (doesnt work inside the cell-tower function)
 idx = index.Index()
 column_names = ['latitude', 'longitude']
-df = pd.read_csv(r'celltowers\234.csv', names=column_names, header=None)
+df = pd.read_csv(r'celltowers\234-revised.csv', names=column_names, header=None)
 # Converting it to a geopandas df
 gdf = gpd.GeoDataFrame(df, geometry=gpd.points_from_xy(df.longitude, df.latitude))
 for i, tower in gdf.iterrows():
     if tower.geometry is not None:
         idx.insert(i, tower.geometry.bounds)
+
 # creating the database model
 class User(db.Model):
     __tablename__ = 'userlogs'
@@ -74,12 +75,14 @@ class MyForm(FlaskForm):
         FileAllowed(['csv'],'FILE FORMATE MUST BE .CSV')
     ])
     submit = SubmitField('Submit')
-
 @app.route('/', methods=['GET', 'POST'])
 def index():
+    empty_folders()
     session['logged_in'] = False
     form = MyForm()
     if form.validate_on_submit():
+        with open('templates/pano.html', 'w'):
+            pass
         username = form.username.data
         email = form.email.data
         csv_filename = csv_uploads.save(form.csv_file.data)
@@ -107,8 +110,7 @@ def index():
 # returning full page of pano images
 @app.route('/formatted')
 def formatted():
-    return render_template('pano.html')
-
+    return render_template('pano.html', timestamp=datetime.now())
 @app.route('/success')
 def success():
     file_size = os.path.getsize('output.docx')
@@ -224,10 +226,12 @@ def formatted_address(csv_filename):
     locations['approx-address'] = approx_address
     print(csv_filename)
     locations.to_csv('outputs/'+ csv_filename, index=False)
-    pano(csv_filename)
+    pano()
 # pano stitching using googles static api 
-def pano(csv_filename):
+def pano():
+    csv_filename = session.get('csv_filename')
     locations_pano = pd.read_csv('outputs/' + csv_filename)
+    print(locations_pano)
     headings = [0, 90, 180, 270]
     locations_pano['img_source'] = locations_pano['approx-address']
     for i in range(0, len(locations_pano)):
@@ -280,6 +284,7 @@ def pano(csv_filename):
     text_file.write(result_html_replaced)
     text_file.write('{% endblock %}')
     text_file.close()
+    locations_pano = locations_pano.drop(index=locations_pano.index, columns=locations_pano.columns)
 
 # func for finding the closest cell towers
 def find_closest_towers(coords_df, gdf, idx):
