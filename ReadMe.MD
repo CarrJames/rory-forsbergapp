@@ -1,4 +1,4 @@
-## Forsberg Dis Application
+# Forsberg Dis Application
 CURRENT RUNNING TIMES
 Start Up For Cell Tower Locaters
 Iterates through 1.2 million locations -> Around 5 Minutes (ONLY OCCURS ONCE, UPON STARTING APPLICATION)
@@ -11,7 +11,7 @@ In python console:
 1.) from app import init_db
 2.) init_db()
 
-# To run the application:
+### To run the application:
 Make sure inside venv
 -> venv/Scripts/activate
 Then:
