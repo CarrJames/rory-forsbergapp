@@ -1,19 +1,18 @@
 ## Forsberg Dis Application
 CURRENT RUNNING TIMES
+Start Up For Cell Tower Locaters
+Iterates through 1.2 million locations -> Around 5 Minutes (ONLY OCCURS ONCE, UPON STARTING APPLICATION)
 Returning Addresses + Pano Images
-177 LOCATIONS -> 3:45 second runtime 
+177 LOCATIONS -> Around 4 minutes 
 
+## Using the application
+Need to first initialise database
+In python console:
+1.) from app import init_db
+2.) init_db()
 
-What works?
-Address Return
-Static Image Return
-Pano Stitching 
-Pano Saving 
-CSV Export 
-DocX Export
-
-What isnt working... YET
-Database isnt working yet -> logs therefore isnt working
-Not started work on the map (cell tower location)
-Needs an overall face lift as well
-Also need to work on the way you traverse the website
+# To run the application:
+Make sure inside venv
+-> venv/Scripts/activate
+Then:
+Flask run
