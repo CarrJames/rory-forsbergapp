@@ -1,0 +1,17 @@
+Flask
+Flask-WTF
+WTForms
+Flask-Uploads
+pandas
+Flask-SQLAlchemy
+python-docx
+Flask-Login
+requests
+googlemaps
+smtplib
+pyopenssl
+folium
+Pillow
+geopandas
+rtree
+shapely
