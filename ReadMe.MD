@@ -16,3 +16,4 @@ Make sure inside venv
 -> venv/Scripts/activate
 Then:
 Flask run
+
