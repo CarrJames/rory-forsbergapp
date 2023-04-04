@@ -30,6 +30,13 @@ csv_uploads = UploadSet('csv')
 configure_uploads(app, csv_uploads)
 # Spatial Index configuration (doesnt work inside the cell-tower function)
 idx = index.Index()
+column_names = ['latitude', 'longitude']
+df = pd.read_csv(r'celltowers\234.csv', names=column_names, header=None)
+# Converting it to a geopandas df
+gdf = gpd.GeoDataFrame(df, geometry=gpd.points_from_xy(df.longitude, df.latitude))
+for i, tower in gdf.iterrows():
+    if tower.geometry is not None:
+        idx.insert(i, tower.geometry.bounds)
 # creating the database model
 class User(db.Model):
     __tablename__ = 'userlogs'
@@ -121,13 +128,6 @@ def logs():
 # func for showing closest cell towers
 @app.route('/celldist')
 def celldist():
-    column_names = ['latitude', 'longitude']
-    df = pd.read_csv(r'celltowers\234.csv', names=column_names, header=None)
-    # Converting it to a geopandas df
-    gdf = gpd.GeoDataFrame(df, geometry=gpd.points_from_xy(df.longitude, df.latitude))
-    for i, tower in gdf.iterrows():
-        if tower.geometry is not None:
-            idx.insert(i, tower.geometry.bounds)
     coords_filename = f'uploads/csv/{session.get("csv_filename")}'
     coords_df = pd.read_csv(coords_filename)
     result_df = find_closest_towers(coords_df, gdf, idx)
