@@ -1,5 +1,5 @@
 # Installation #
-* git clone https://github.com/roryfmc/Tharsus-2033-Shared
+* git clone https://github.com/roryfmc/forsberg-application
 
 * yarn install
 
