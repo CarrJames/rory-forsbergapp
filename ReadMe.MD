@@ -1,9 +1,9 @@
 # Forsberg Dis Application #
 * CURRENT RUNNING TIMES
 * Start Up For Cell Tower Locaters
-** Around 5 Minutes (ONLY OCCURS ONCE, UPON STARTING APPLICATION)
+* Around 5 Minutes (ONLY OCCURS ONCE, UPON STARTING APPLICATION)
 * Returning Addresses + Pano Images
-** 177 LOCATIONS -> Around 4 minutes 
+* 177 LOCATIONS -> Around 4 minutes 
 
 ## Using the application ##
 Need to first initialise database
