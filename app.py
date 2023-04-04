@@ -32,8 +32,9 @@ db = SQLAlchemy(app)
 #   FILE UPLOAD CONFIGURATION
 csv_uploads = UploadSet('csv')
 configure_uploads(app, csv_uploads)
-# Spatial Index 
+# Spatial Index configuration (doesnt work inside the cell-tower function)
 idx = index.Index()
+# creating the database model
 class User(db.Model):
     __tablename__ = 'userlogs'
     id = db.Column(db.Integer, primary_key=True)
@@ -46,23 +47,22 @@ class User(db.Model):
         self.username = username
         self.email = email
         self.csv_file = csv_file
-
+# call to create the database model
 def init_db():
     db.drop_all()
     db.create_all()
     new_user = User(username='user1', email='test@test.com', csv_file='test.csv')
     db.session.add(new_user)    
     db.session.commit()
-
+# deleting all prior entries to the database
 @app.route('/clear_db', methods=['POST'])
 def clear_db():
     all_users = db.session.query(User).all()
-    
     for user in all_users:
         db.session.delete(user)
     db.session.commit()
     return render_template('logs.html')
-
+# form set up for the index page
 class MyForm(FlaskForm):
     username = StringField('Username', validators=[DataRequired()])
     email = StringField('Email', validators=[DataRequired(), Email()])
@@ -80,17 +80,18 @@ def index():
         username = form.username.data
         email = form.email.data
         csv_filename = csv_uploads.save(form.csv_file.data)
-        #GETTING THE ADRESSES
+        # Adding the inputs to the database
         new_user = User(username=form.username.data, email=form.email.data, csv_file=csv_filename)
         db.session.add(new_user)
         db.session.commit()   
+        # adding the email and csv to the session so I can access them in different functions
         session['email'] = email
         session['csv_filename'] = csv_filename
         formatted_address(csv_filename)
         session['logged_in'] = True
         return redirect(url_for('success'))
     return render_template('index.html', form=form)
-
+# returning full page of pano images
 @app.route('/formatted')
 def formatted():
     return render_template('pano.html')
@@ -98,12 +99,12 @@ def formatted():
 @app.route('/success')
 def success():
     return render_template('success.html')
-
+# shows database entries
 @app.route('/logs')
 def logs():
     data=User.query.all()
     return render_template('logs.html', data=data)
-
+# func for showing closest cell towers
 @app.route('/celldist')
 def celldist():
     column_names = ['latitude', 'longitude']
@@ -116,12 +117,11 @@ def celldist():
     coords_filename = f'uploads/csv/{session.get("csv_filename")}'
     coords_df = pd.read_csv(coords_filename)
     result_df = find_closest_towers(coords_df, gdf, idx)
-    print(result_df)
     results = pd.DataFrame(result_df, columns=['latitude', 'longitude', 'geometry'])
     results.to_csv('results.csv')
     # mapping it using folium 
     m = folium.Map(location=[52.7, -1.4], zoom_start=6)
-    fg1 = folium.FeatureGroup(name='Markers 1', show=True)
+    fg1 = folium.FeatureGroup(name='Cell Towers', show=True)
     for i, row in results.iterrows():
         folium.Marker(location=[row['latitude'], row['longitude']],
                     tooltip=f"ID: {i}",
@@ -129,9 +129,9 @@ def celldist():
                     ).add_to(fg1)
     
 # Create a feature group for the second set of markers (green color)
-    fg2 = folium.FeatureGroup(name='Markers 2', show=True)
+    fg2 = folium.FeatureGroup(name='Inputted', show=True)
     for i, row in coords_df.iterrows():
-        folium.Marker(location=[row['latitude (deg)'], row['longitude (deg)']],  # offset the location for demo purposes
+        folium.Marker(location=[row['latitude (deg)'], row['longitude (deg)']], 
                     tooltip=f"ID: {i}",
                     icon=folium.Icon(color='green')
                     ).add_to(fg2)
@@ -139,13 +139,11 @@ def celldist():
 # Add the feature groups to the map object
     fg1.add_to(m)
     fg2.add_to(m)
-
-# Add a layer control to the map object to toggle the feature groups
     folium.LayerControl().add_to(m)
     map_html = m._repr_html_()
     return render_template('celltowers.html', map=map_html)
     
-
+# email function using temporary email 
 @app.route('/send_email', methods=['POST'])
 def send_email():
     email_sender = 'disformatter@gmail.com'
@@ -171,7 +169,7 @@ def send_email():
         smtp.login(email_sender, email_password)
         smtp.sendmail(email_sender, email_reciever, em.as_string())
     return render_template('sent.html')
-
+# empties the uploads folder and the static folder to reduce application size
 @app.before_first_request
 def empty_folders():
     upload_folder = app.config['UPLOAD_FOLDER'] = os.path.join(os.getcwd(), 'uploads', 'csv')
@@ -185,7 +183,7 @@ def empty_folders():
             except Exception as e:
                 print('Failed to delete %s. Reason: %s' % (file_path, e))
 
-
+# address formatter using googles reverse geocoder api 
 def formatted_address(csv_filename):
     locations = pd.read_csv('uploads/csv/' + csv_filename)
     gmaps = googlemaps.Client(key='AIzaSyBwP_5ZGFGEhgo1Zc9cxW5l2jjEz5-gd1o')
@@ -208,7 +206,7 @@ def formatted_address(csv_filename):
     print(csv_filename)
     locations.to_csv('outputs/'+ csv_filename, index=False)
     pano(csv_filename)
-
+# pano stitching using googles static api 
 def pano(csv_filename):
     locations_pano = pd.read_csv('outputs/' + csv_filename)
     headings = [0, 90, 180, 270]
@@ -250,6 +248,7 @@ def pano(csv_filename):
     to_word(csv_filename)
     # TO HTML
     locations_html = locations_pano.drop(columns=['GPS week', 'GPS second', 'solution status', 'height (m)'])
+    # putting the images together into a html file
     result_html = locations_html.to_html()
     result_html_replaced = result_html.replace('&lt;','<').replace('&gt;','>')
     text_file = open('templates/pano.html', "w")
@@ -259,6 +258,7 @@ def pano(csv_filename):
     text_file.write('{% endblock %}')
     text_file.close()
 
+# func for finding the closest cell towers
 def find_closest_towers(coords_df, gdf, idx):
     closest_towers = []
     for i, row in coords_df.iterrows():
@@ -277,6 +277,7 @@ def find_closest_towers(coords_df, gdf, idx):
         closest_towers.append(closest_tower)
     return closest_towers
 
+# formatting document in a word format
 def to_word(csv_filename):
     locations_toword = pd.read_csv('outputs/' + csv_filename)
     locations_toword = locations_toword.drop(columns=['GPS week', 'GPS second', 'solution status', 'height (m)'])
