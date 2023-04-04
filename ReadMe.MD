@@ -1,3 +1,9 @@
+# Installation #
+* git clone https://github.com/roryfmc/Tharsus-2033-Shared
+
+* yarn install
+
+* pip install -r requirements.txt
 # Forsberg Dis Application #
 * CURRENT RUNNING TIMES
 * Start Up For Cell Tower Locaters
