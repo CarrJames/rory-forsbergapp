@@ -2,9 +2,8 @@
 
 {% block content %}
 
-    <div class="column is-5 is-offset-4">
-        <h3 class="title is-3">CLOSEST CELL TOWER LOCATER (BETA)</h3>
+    <div class="column is-5 is-offset-2">
+        <h3 class="title is-3 is-fullwidth">CLOSEST CELL TOWER LOCATER (BETA)</h3>
+        <div id="map" style="width: 800px; height: 400x">{{ map|safe }}</div>
     </div>
-    <div id="map" style="width: 800px; height: 600px"></div>
-    {{ map_html|safe }}
 {% endblock %}

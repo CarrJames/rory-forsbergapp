@@ -107,7 +107,7 @@ def logs():
 @app.route('/celldist')
 def celldist():
     column_names = ['latitude', 'longitude']
-    df = pd.read_csv(r'C:\Users\Rory\Desktop\UNI3\dis-test\cell-tower\234.csv', names=column_names, header=None)
+    df = pd.read_csv(r'C:\Users\Rory\Desktop\UNI3\dis-test\cell-tower\234-revised.csv', names=column_names, header=None)
     # Converting it to a geopandas df
     gdf = gpd.GeoDataFrame(df, geometry=gpd.points_from_xy(df.longitude, df.latitude))
     for i, tower in gdf.iterrows():
@@ -120,8 +120,8 @@ def celldist():
     results = pd.DataFrame(result_df, columns=['latitude', 'longitude', 'geometry'])
     results.to_csv('results.csv')
     # mapping it using folium 
-    m = folium.Map(zoom_start=13)
-    fg1 = folium.FeatureGroup(name='Markers 1', show=False)
+    m = folium.Map(location=[52.7, -1.4], zoom_start=6)
+    fg1 = folium.FeatureGroup(name='Markers 1', show=True)
     for i, row in results.iterrows():
         folium.Marker(location=[row['latitude'], row['longitude']],
                     tooltip=f"ID: {i}",
@@ -129,7 +129,7 @@ def celldist():
                     ).add_to(fg1)
     
 # Create a feature group for the second set of markers (green color)
-    fg2 = folium.FeatureGroup(name='Markers 2', show=False)
+    fg2 = folium.FeatureGroup(name='Markers 2', show=True)
     for i, row in coords_df.iterrows():
         folium.Marker(location=[row['latitude (deg)'], row['longitude (deg)']],  # offset the location for demo purposes
                     tooltip=f"ID: {i}",
@@ -142,7 +142,7 @@ def celldist():
 
 # Add a layer control to the map object to toggle the feature groups
     folium.LayerControl().add_to(m)
-    map_html = m.get_root().render()
+    map_html = m._repr_html_()
     return render_template('celltowers.html', map=map_html)
     
 
