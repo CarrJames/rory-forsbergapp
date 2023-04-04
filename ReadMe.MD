@@ -6,6 +6,9 @@
 * 177 LOCATIONS -> Around 4 minutes 
 
 ## Using the application ##
+MUST HAVE GOOGLE API KEY
+GEOCODING API AND STREET VIEW STATIC API MUST BE SELECTED ON GOOGLE DASHBOARD
+API KEY NEEDS INPUTTING IN formatted_address func and pano func
 Need to first initialise database
 In python console:
 * 1.) from app import init_db
