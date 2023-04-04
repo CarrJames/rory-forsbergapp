@@ -29,7 +29,7 @@
                             Input New File Here
                         </a>
                         {% if session['logged_in'] %}
-                        <a href="{{ url_for('formatted') }}" class="navbar-item">
+                        <a href="{{ url_for('formatted') }}?{{timestamp}}" class="navbar-item">
                             Current File Output
                         </a>
                         {% endif %}

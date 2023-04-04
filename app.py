@@ -1,5 +1,6 @@
 from flask import Flask, render_template, request, redirect, url_for, session, send_file
 from flask_wtf import FlaskForm
+from flask_caching import Cache
 from flask_wtf.file import FileField, FileRequired, FileAllowed
 from wtforms import StringField, SubmitField
 from wtforms.validators import DataRequired, Email
@@ -19,6 +20,7 @@ from shapely.geometry import Point
 
 
 app = Flask(__name__)
+app.config['CACHE_TYPE'] = 'simple'
 app.config['SECRET_KEY'] = 'secret_key'
 app.config['UPLOADED_CSV_DEST'] = 'uploads/csv'
 #   DATABASE CONFIGURATION
@@ -28,6 +30,7 @@ db = SQLAlchemy(app)
 #   FILE UPLOAD CONFIGURATION
 csv_uploads = UploadSet('csv')
 configure_uploads(app, csv_uploads)
+cache = Cache(app)
 # Spatial Index configuration (doesnt work inside the cell-tower function)
 idx = index.Index()
 column_names = ['latitude', 'longitude']
@@ -77,6 +80,8 @@ class MyForm(FlaskForm):
     submit = SubmitField('Submit')
 @app.route('/', methods=['GET', 'POST'])
 def index():
+    # Clear the cache
+    cache.clear()
     empty_folders()
     session['logged_in'] = False
     form = MyForm()
@@ -99,7 +104,7 @@ def index():
         # check if the DataFrame has all the expected columns
         if set(expected_columns).issubset(set(locations.columns)):
             print('inputted csv has correct columns')
-            formatted_address(csv_filename)
+            formatted_address()
             session['logged_in'] = True
             return redirect(url_for('success'))
         else:
@@ -205,7 +210,8 @@ def empty_folders():
                 print('Failed to delete %s. Reason: %s' % (file_path, e))
 
 # address formatter using googles reverse geocoder api 
-def formatted_address(csv_filename):
+def formatted_address():#
+    csv_filename = session.get('csv_filename')
     locations = pd.read_csv('uploads/csv/' + csv_filename)
     gmaps = googlemaps.Client(key='AIzaSyBwP_5ZGFGEhgo1Zc9cxW5l2jjEz5-gd1o')
 
@@ -225,6 +231,7 @@ def formatted_address(csv_filename):
 
     locations['approx-address'] = approx_address
     print(csv_filename)
+    print('ylalalal')
     locations.to_csv('outputs/'+ csv_filename, index=False)
     pano()
 # pano stitching using googles static api 
