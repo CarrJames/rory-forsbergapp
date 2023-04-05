@@ -1,0 +1,41 @@
+{% extends "base.html" %}{% block content %}<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>latitude (deg)</th>
+      <th>longitude (deg)</th>
+      <th>approx-address</th>
+      <th>img_source</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>51.569995</td>
+      <td>0.126908</td>
+      <td>1145 High Rd, Romford RM6 4AT, UK</td>
+      <td><img src='{{ url_for('static', filename='0.jpg') }}'></td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>51.570036</td>
+      <td>0.127069</td>
+      <td>Chadwell Arms, 1149 High Rd, Romford RM6 4AT, UK</td>
+      <td><img src='{{ url_for('static', filename='1.jpg') }}'></td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>51.565548</td>
+      <td>0.145797</td>
+      <td>126 Whalebone Ln S, Dagenham RM8 1BA, UK</td>
+      <td><img src='{{ url_for('static', filename='2.jpg') }}'></td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>51.561511</td>
+      <td>0.147899</td>
+      <td>Meadway Court, Whalebone Ln S, Dagenham RM8 1AD, UK</td>
+      <td><img src='{{ url_for('static', filename='3.jpg') }}'></td>
+    </tr>
+  </tbody>
+</table>{% endblock %}

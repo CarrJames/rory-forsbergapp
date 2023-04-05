@@ -1,6 +1,5 @@
 from flask import Flask, render_template, request, redirect, url_for, session, send_file
 from flask_wtf import FlaskForm
-from flask_caching import Cache
 from flask_wtf.file import FileField, FileRequired, FileAllowed
 from wtforms import StringField, SubmitField
 from wtforms.validators import DataRequired, Email
@@ -27,16 +26,17 @@ app.config['UPLOADED_CSV_DEST'] = 'uploads/csv'
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///userlogs.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
+counter = 0
 #   FILE UPLOAD CONFIGURATION
 csv_uploads = UploadSet('csv')
 configure_uploads(app, csv_uploads)
-cache = Cache(app)
 # Spatial Index configuration (doesnt work inside the cell-tower function)
 idx = index.Index()
 column_names = ['latitude', 'longitude']
 df = pd.read_csv(r'celltowers\234-revised.csv', names=column_names, header=None)
 # Converting it to a geopandas df
 gdf = gpd.GeoDataFrame(df, geometry=gpd.points_from_xy(df.longitude, df.latitude))
+# filling the spatial index with the geometry bounds
 for i, tower in gdf.iterrows():
     if tower.geometry is not None:
         idx.insert(i, tower.geometry.bounds)
@@ -80,8 +80,6 @@ class MyForm(FlaskForm):
     submit = SubmitField('Submit')
 @app.route('/', methods=['GET', 'POST'])
 def index():
-    # Clear the cache
-    cache.clear()
     empty_folders()
     session['logged_in'] = False
     form = MyForm()
@@ -115,7 +113,8 @@ def index():
 # returning full page of pano images
 @app.route('/formatted')
 def formatted():
-    return render_template('pano.html', timestamp=datetime.now())
+    # fixing issue with pano.html not reloading
+    return render_template(session.get('pano'), timestamp=datetime.now())
 @app.route('/success')
 def success():
     file_size = os.path.getsize('output.docx')
@@ -236,6 +235,8 @@ def formatted_address():#
     pano()
 # pano stitching using googles static api 
 def pano():
+    global counter
+    counter += 1
     csv_filename = session.get('csv_filename')
     locations_pano = pd.read_csv('outputs/' + csv_filename)
     print(locations_pano)
@@ -285,14 +286,17 @@ def pano():
     # putting the images together into a html file
     result_html = locations_pano.to_html()
     result_html_replaced = result_html.replace('&lt;','<').replace('&gt;','>')
-    text_file = open('templates/pano.html', "w")
+    file_name = f"pano{counter}.html"
+    file_path = os.path.join(os.getcwd(), 'templates', file_name)
+    text_file = open(file_path, "w")
+    print(file_name, file_path)
     text_file.write('{% extends "base.html" %}')
     text_file.write('{% block content %}')
     text_file.write(result_html_replaced)
     text_file.write('{% endblock %}')
     text_file.close()
-    locations_pano = locations_pano.drop(index=locations_pano.index, columns=locations_pano.columns)
-
+    session['pano'] = file_name
+ 
 # func for finding the closest cell towers
 def find_closest_towers(coords_df, gdf, idx):
     closest_towers = []
