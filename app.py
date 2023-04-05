@@ -335,6 +335,7 @@ def to_word(csv_filename):
         image_cell.add_paragraph().add_run().add_picture('static/' + str(index) + '.jpg', width=Inches(4.0), height=Inches(1.8))
 
     doc.save('output.docx')
+# needed as cache is saving the pano pages
 def delete_pano_templates():
     template_dir = os.path.join(os.getcwd(), 'templates')
     files = os.listdir(template_dir)
@@ -342,6 +343,16 @@ def delete_pano_templates():
         if 'pano' in file_name:
             file_path = os.path.join(template_dir, file_name)
             os.remove(file_path)
-
+# output so the user can have csv of closest cell-towers
+@app.route('/output_cell_towers', methods=['POST'])
+def output_cell_towers():
+    coords_filename = f'uploads/csv/{session.get("csv_filename")}'
+    coords_df = pd.read_csv(coords_filename)
+    coords_df = coords_df.drop(columns=['GPS week', 'GPS second', 'solution status', 'height (m)'])
+    cell_results = pd.read_csv('results.csv')
+    combined_results = pd.concat([coords_df, cell_results], axis=1)
+    combined_results.columns = ['Latitude', 'Longitude', 'Tower Index', ' Tower Latitude', ' Tower Longitude', ' Tower Geometry']
+    combined_results.to_csv('combined_results.csv')
+    return send_file('combined_results.csv', as_attachment=True)
 if __name__ == '__main__':
     app.run(debug=True)
