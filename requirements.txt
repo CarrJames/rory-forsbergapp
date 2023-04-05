@@ -15,4 +15,3 @@ Pillow
 geopandas
 rtree
 shapely
-flask-caching
