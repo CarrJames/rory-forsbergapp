@@ -356,7 +356,7 @@ def output_cell_towers():
     combined_results.columns = ['Latitude', 'Longitude', 'Tower Index', ' Tower Latitude', ' Tower Longitude', ' Tower Geometry']
     combined_results.to_csv('combined_results.csv')
     return send_file('combined_results.csv', as_attachment=True)
-@app.route('/example', methods=['POST'])
+@app.route('/example')
 def example():
     return render_template('example.html')
 if __name__ == '__main__':
