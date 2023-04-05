@@ -8,8 +8,7 @@ import pandas as pd
 from flask_sqlalchemy import SQLAlchemy
 from docx import Document
 from docx.shared import Inches
-from flask_login import login_required
-import os, requests, shutil, json, googlemaps, smtplib, ssl, folium, pickle
+import os, requests, shutil, json, googlemaps, smtplib, ssl, folium
 from datetime import datetime
 from PIL import Image
 from email.message import EmailMessage
@@ -17,15 +16,14 @@ import geopandas as gpd
 from rtree import index
 from shapely.geometry import Point
 
-
 app = Flask(__name__)
-app.config['CACHE_TYPE'] = 'simple'
 app.config['SECRET_KEY'] = 'secret_key'
 app.config['UPLOADED_CSV_DEST'] = 'uploads/csv'
 #   DATABASE CONFIGURATION
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///userlogs.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
+# counter for pano webpage output (solves cache problem)
 counter = 0
 #   FILE UPLOAD CONFIGURATION
 csv_uploads = UploadSet('csv')
@@ -197,7 +195,9 @@ def download():
 def empty_folders():
     upload_folder = app.config['UPLOAD_FOLDER'] = os.path.join(os.getcwd(), 'uploads', 'csv')
     temp_folder = app.config['TEMP_FOLDER'] = os.path.join(os.getcwd(), 'static')
-    for folder in [upload_folder, temp_folder]:
+    out_folder = app.config['OUT_FOLDER'] = os.path.join(os.getcwd(), 'outputs')
+    s_images = app.config['S_IMAGES'] = os.path.join(os.getcwd(), 'standalone_images')
+    for folder in [upload_folder, temp_folder, out_folder, s_images]:
         for filename in os.listdir(folder):
             file_path = os.path.join(folder, filename)
             try:
