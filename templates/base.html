@@ -28,6 +28,9 @@
                         <a href="{{ url_for('index') }}" class="navbar-item">
                             Input New File Here
                         </a>
+                        <a href="{{ url_for('example') }}" class="navbar-item">
+                            Example Input
+                        </a>
                         {% if session['logged_in'] %}
                         <a href="{{ url_for('formatted') }}?{{timestamp}}" class="navbar-item">
                             Current File Output

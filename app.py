@@ -227,7 +227,6 @@ def formatted_address():#
 
     locations['approx-address'] = approx_address
     print(csv_filename)
-    print('ylalalal')
     locations.to_csv('outputs/'+ csv_filename, index=False)
     pano()
 # pano stitching using googles static api 
@@ -348,11 +347,17 @@ def delete_pano_templates():
 def output_cell_towers():
     coords_filename = f'uploads/csv/{session.get("csv_filename")}'
     coords_df = pd.read_csv(coords_filename)
-    coords_df = coords_df.drop(columns=['GPS week', 'GPS second', 'solution status', 'height (m)'])
+    expected_columns = ['GPS week', 'GPS second', 'solution status', 'height (m)']
+        # check if the DataFrame has all the expected columns
+    if set(expected_columns).issubset(set(coords_df.columns)):
+        coords_df = coords_df.drop(columns=['GPS week', 'GPS second', 'solution status', 'height (m)'])
     cell_results = pd.read_csv('results.csv')
     combined_results = pd.concat([coords_df, cell_results], axis=1)
     combined_results.columns = ['Latitude', 'Longitude', 'Tower Index', ' Tower Latitude', ' Tower Longitude', ' Tower Geometry']
     combined_results.to_csv('combined_results.csv')
     return send_file('combined_results.csv', as_attachment=True)
+@app.route('/example', methods=['POST'])
+def example():
+    return render_template('example.html')
 if __name__ == '__main__':
     app.run(debug=True)

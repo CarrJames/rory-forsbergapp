@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+    <div class="column is-5 is-offset-4">
+        <h3 class="title is-3">Example Input File Format</h3>
+        <table border="1" class="dataframe">
+            <thead>
+              <tr style="text-align: right;">
+                <th>GPS week</th>
+                <th>GPS second</th>
+                <th>solution status</th>
+                <th>latitude (deg)</th>
+                <th>longitude (deg)</th>
+                <th>height (m)</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>2236</td>
+                <td>28585</td>
+                <td>SOL_COMPUTED</td>
+                <td>51.569995</td>
+                <td>0.126908</td>
+                <td>13.0445</td>
+              </tr>
+              <tr>
+                <td>2236</td>
+                <td>28586</td>
+                <td>SOL_COMPUTED</td>
+                <td>51.570036</td>
+                <td>0.127069</td>
+                <td>12.9986</td>
+              </tr>
+              <tr>
+                <td>2236</td>
+                <td>28877</td>
+                <td>SOL_COMPUTED</td>
+                <td>51.565548</td>
+                <td>0.145797</td>
+                <td>10.9858</td>
+              </tr>
+              <tr>
+                <td>2236</td>
+                <td>28925</td>
+                <td>SOL_COMPUTED</td>
+                <td>51.561511</td>
+                <td>0.147899</td>
+                <td>19.2013</td>
+              </tr>
+            </tbody>
+          </table>
+    </div>
+    
+{% endblock %}
