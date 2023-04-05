@@ -9,9 +9,6 @@
             <input class="button is-block is-info is-fullwidth" value="Output File Is Too Large To Email">
         </form>
         <br>
-        <form action="{{ url_for('download') }}" method="POST">
-            <input class="button is-block is-info is-fullwidth" type="submit" value="Download File">
-        </form>
         {% else %}
         <form action="{{ url_for('send_email') }}" method="POST">
             <input class="button is-block is-info is-fullwidth" type="submit" value="Email File">
