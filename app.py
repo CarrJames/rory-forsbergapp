@@ -81,6 +81,7 @@ class MyForm(FlaskForm):
 @app.route('/', methods=['GET', 'POST'])
 def index():
     empty_folders()
+    delete_pano_templates()
     session['logged_in'] = False
     form = MyForm()
     if form.validate_on_submit():
@@ -162,7 +163,6 @@ def celldist():
     folium.LayerControl().add_to(m)
     map_html = m._repr_html_()
     return render_template('celltowers.html', map=map_html)
-    
 # email function using temporary email 
 @app.route('/send_email', methods=['POST'])
 def send_email():
@@ -189,11 +189,9 @@ def send_email():
         smtp.login(email_sender, email_password)
         smtp.sendmail(email_sender, email_reciever, em.as_string())
     return render_template('sent.html')
-
 @app.route('/download', methods=['POST'])
 def download():
     return send_file('output.docx', as_attachment=True)
-
 # empties the uploads folder and the static folder to reduce application size    
 @app.before_first_request
 def empty_folders():
@@ -207,7 +205,6 @@ def empty_folders():
                     os.unlink(file_path)
             except Exception as e:
                 print('Failed to delete %s. Reason: %s' % (file_path, e))
-
 # address formatter using googles reverse geocoder api 
 def formatted_address():#
     csv_filename = session.get('csv_filename')
@@ -289,14 +286,13 @@ def pano():
     file_name = f"pano{counter}.html"
     file_path = os.path.join(os.getcwd(), 'templates', file_name)
     text_file = open(file_path, "w")
-    print(file_name, file_path)
+    #print(file_name, file_path)
     text_file.write('{% extends "base.html" %}')
     text_file.write('{% block content %}')
     text_file.write(result_html_replaced)
     text_file.write('{% endblock %}')
     text_file.close()
     session['pano'] = file_name
- 
 # func for finding the closest cell towers
 def find_closest_towers(coords_df, gdf, idx):
     closest_towers = []
@@ -315,7 +311,6 @@ def find_closest_towers(coords_df, gdf, idx):
                 closest_tower = tower
         closest_towers.append(closest_tower)
     return closest_towers
-
 # formatting document in a word format
 def to_word(csv_filename):
     locations_toword = pd.read_csv('outputs/' + csv_filename)
@@ -340,6 +335,13 @@ def to_word(csv_filename):
         image_cell.add_paragraph().add_run().add_picture('static/' + str(index) + '.jpg', width=Inches(4.0), height=Inches(1.8))
 
     doc.save('output.docx')
+def delete_pano_templates():
+    template_dir = os.path.join(os.getcwd(), 'templates')
+    files = os.listdir(template_dir)
+    for file_name in files:
+        if 'pano' in file_name:
+            file_path = os.path.join(template_dir, file_name)
+            os.remove(file_path)
 
 if __name__ == '__main__':
     app.run(debug=True)
