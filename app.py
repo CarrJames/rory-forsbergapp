@@ -31,7 +31,7 @@ configure_uploads(app, csv_uploads)
 # Spatial Index configuration (doesnt work inside the cell-tower function)
 idx = index.Index()
 column_names = ['latitude', 'longitude']
-df = pd.read_csv(r'celltowers\234-revised.csv', names=column_names, header=None)
+df = pd.read_csv(r'celltowers\234.csv', names=column_names, header=None)
 # Converting it to a geopandas df
 gdf = gpd.GeoDataFrame(df, geometry=gpd.points_from_xy(df.longitude, df.latitude))
 # filling the spatial index with the geometry bounds
@@ -209,7 +209,7 @@ def empty_folders():
 def formatted_address():#
     csv_filename = session.get('csv_filename')
     locations = pd.read_csv('uploads/csv/' + csv_filename)
-    gmaps = googlemaps.Client(key='AIzaSyBwP_5ZGFGEhgo1Zc9cxW5l2jjEz5-gd1o')
+    gmaps = googlemaps.Client(key='-')
 
     approx_address = []
     # putting the lat and long to the api
@@ -244,7 +244,7 @@ def pano():
         address = locations_pano.iloc[i]['approx-address']
         for heading in headings:
             input_heading = heading
-            url = "https://maps.googleapis.com/maps/api/streetview?location={},{}&size=640x640&pitch=0&fov=90&heading={}&key=AIzaSyBwP_5ZGFGEhgo1Zc9cxW5l2jjEz5-gd1o".format(lat1, long1, input_heading)
+            url = "https://maps.googleapis.com/maps/api/streetview?location={},{}&size=640x640&pitch=0&fov=90&heading={}&key=".format(lat1, long1, input_heading)
             response = requests.get(url,stream=True)
             if response.status_code == 200:
                 with open(f"standalone_images/{heading}.jpg", "wb") as f:
