@@ -1,5 +1,5 @@
 # Installation #
-* git clone https://github.com/roryfmc/forsberg-application
+* git clone https://github.com/roryfmc/forsberg-application-priv ( when access settings have been changed)
 
 * yarn install
 
