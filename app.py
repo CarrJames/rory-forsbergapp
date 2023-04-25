@@ -9,12 +9,14 @@ from flask_sqlalchemy import SQLAlchemy
 from docx import Document
 from docx.shared import Inches
 import os, requests, shutil, json, googlemaps, smtplib, ssl, folium
+import geopy.distance
 from datetime import datetime
 from PIL import Image
 from email.message import EmailMessage
 import geopandas as gpd
 from rtree import index
 from shapely.geometry import Point
+from docx.enum.table import WD_TABLE_ALIGNMENT
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'secret_key'
@@ -31,7 +33,7 @@ configure_uploads(app, csv_uploads)
 # Spatial Index configuration (doesnt work inside the cell-tower function)
 idx = index.Index()
 column_names = ['latitude', 'longitude']
-df = pd.read_csv(r'celltowers\234-revised.csv', names=column_names, header=None)
+df = pd.read_csv(r'celltowers\234.csv', names=column_names, header=None)
 # Converting it to a geopandas df
 gdf = gpd.GeoDataFrame(df, geometry=gpd.points_from_xy(df.longitude, df.latitude))
 # filling the spatial index with the geometry bounds
@@ -133,25 +135,29 @@ def logs():
 # func for showing closest cell towers
 @app.route('/celldist')
 def celldist():
+    get_closest_towers()
     coords_filename = f'uploads/csv/{session.get("csv_filename")}'
     coords_df = pd.read_csv(coords_filename)
-    result_df = find_closest_towers(coords_df, gdf, idx)
-    results = pd.DataFrame(result_df, columns=['latitude', 'longitude', 'geometry'])
-    results.to_csv('results.csv')
+    results = pd.read_csv('results.csv')
     # mapping it using folium 
     m = folium.Map(location=[52.7, -1.4], zoom_start=6)
     fg1 = folium.FeatureGroup(name='Cell Towers', show=True)
+    
     for i, row in results.iterrows():
+        popup_str1 = f"Distance to closest point: {results['distance'].iloc[i]} miles"
         folium.Marker(location=[row['latitude'], row['longitude']],
                     tooltip=f"ID: {i}",
+                    popup=popup_str1,
                     icon=folium.Icon(color='red')
                     ).add_to(fg1)
     
 # Create a feature group for the second set of markers (green color)
     fg2 = folium.FeatureGroup(name='Inputted', show=True)
     for i, row in coords_df.iterrows():
+        popup_str = f"Distance to closest tower: {results['distance'].iloc[i]} miles"
         folium.Marker(location=[row['latitude (deg)'], row['longitude (deg)']], 
                     tooltip=f"ID: {i}",
+                    popup=popup_str,
                     icon=folium.Icon(color='green')
                     ).add_to(fg2)
 
@@ -164,8 +170,8 @@ def celldist():
 # email function using temporary email 
 @app.route('/send_email', methods=['POST'])
 def send_email():
-    email_sender = 'disformatter@gmail.com'
-    email_password = 'bqcwnzqvxhcryylq'
+    email_sender = '@gmail.com'
+    email_password = ''
     email_reciever = session.get('email')
 
     subject = 'Document of Formatted Addresses'
@@ -197,7 +203,8 @@ def empty_folders():
     temp_folder = app.config['TEMP_FOLDER'] = os.path.join(os.getcwd(), 'static')
     out_folder = app.config['OUT_FOLDER'] = os.path.join(os.getcwd(), 'outputs')
     s_images = app.config['S_IMAGES'] = os.path.join(os.getcwd(), 'standalone_images')
-    for folder in [upload_folder, temp_folder, out_folder, s_images]:
+    m_images = app.config['M_IMAGES'] = os.path.join(os.getcwd(), 'maps')
+    for folder in [upload_folder, temp_folder, out_folder, s_images, m_images]:
         for filename in os.listdir(folder):
             file_path = os.path.join(folder, filename)
             try:
@@ -209,7 +216,7 @@ def empty_folders():
 def formatted_address():#
     csv_filename = session.get('csv_filename')
     locations = pd.read_csv('uploads/csv/' + csv_filename)
-    gmaps = googlemaps.Client(key=INPUT_OWN_API_KEY)
+    gmaps = googlemaps.Client(key='')
 
     approx_address = []
     # putting the lat and long to the api
@@ -244,7 +251,7 @@ def pano():
         address = locations_pano.iloc[i]['approx-address']
         for heading in headings:
             input_heading = heading
-            url = "https://maps.googleapis.com/maps/api/streetview?location={},{}&size=640x640&pitch=0&fov=90&heading={}&key=INPUT_OWN_API_KEY".format(lat1, long1, input_heading)
+            url = "https://maps.googleapis.com/maps/api/streetview?location={},{}&size=640x640&pitch=0&fov=90&heading={}&key=".format(lat1, long1, input_heading)
             response = requests.get(url,stream=True)
             if response.status_code == 200:
                 with open(f"standalone_images/{heading}.jpg", "wb") as f:
@@ -272,6 +279,8 @@ def pano():
         width = 1280
         height = 320
         locations_pano['img_source'].iloc[i] = r"<img src='{{ url_for('static', filename=" + repr(filename) + ") }}'>"
+    get_closest_towers()
+    staticmaps()
     to_word(csv_filename)
     # TO HTML
     # dropping possible columns
@@ -310,8 +319,25 @@ def find_closest_towers(coords_df, gdf, idx):
                 closest_tower = tower
         closest_towers.append(closest_tower)
     return closest_towers
+# gets the distance of the closest towers
+def get_closest_towers():
+    csv_filename = f'uploads/csv/{session.get("csv_filename")}'
+    coords_df = pd.read_csv(csv_filename)
+    result_df = find_closest_towers(coords_df, gdf, idx)
+    results = pd.DataFrame(result_df, columns=['latitude', 'longitude', 'geometry', 'distance'])
+    # finding the distance of each
+    for i in range(0,len(coords_df)):
+        loclat = coords_df.iloc[i]['latitude (deg)']
+        loclong = coords_df.iloc[i]['longitude (deg)']
+        celllat = results.iloc[i]['latitude']
+        celllong = results.iloc[i]['longitude']
+        new_column = geopy.distance.geodesic((loclat, loclong),(celllat, celllong)).miles
+        results['distance'].iloc[i] = str(new_column)
+    results.to_csv('results.csv')
 # formatting document in a word format
 def to_word(csv_filename):
+    # adding distance to each cell tower
+    cell_results = pd.read_csv('results.csv')
     locations_toword = pd.read_csv('outputs/' + csv_filename)
      # dropping possible columns
     expected_columns = ['GPS week', 'GPS second', 'solution status', 'height (m)']
@@ -319,19 +345,36 @@ def to_word(csv_filename):
     if set(expected_columns).issubset(set(locations_toword.columns)):
         locations_toword = locations_toword.drop(columns=['GPS week', 'GPS second', 'solution status', 'height (m)'])
     doc = Document()
-    table = doc.add_table(rows=1, cols=len(locations_toword.columns))
+    table = doc.add_table(rows=1, cols=7)
+    table.autofit = False
+    table.width = Inches(9)
+    table.alignment = WD_TABLE_ALIGNMENT.CENTER
+    hdr_cells = table.rows[0].cells
+    hdr_cells[0].text = 'Latitude (Deg)'
+    hdr_cells[1].text = 'Longitude (Deg)'
+    hdr_cells[2].text = 'Location'
+    hdr_cells[3].text = 'Pano Image'
+    hdr_cells[4].text = 'Distance'
+    hdr_cells[5].text = 'Hyperlink'
+    hdr_cells[6].text = 'Map Image'
 
-    header = table.rows[0].cells
-    for i in range(len(locations_toword.columns)):
-        header[i].text = locations_toword.columns[i]
-    header[-1].text = 'Image'
-
-    for index, row in locations_toword.iterrows():
+    for i in range(0,len(locations_toword)):
+        lat1 = locations_toword.iloc[i]['latitude (deg)']
+        long1 = locations_toword.iloc[i]['longitude (deg)']
+        url = "https://www.google.com/maps/place/{},{}".format(lat1,long1)
         row_cells = table.add_row().cells
-        for i in range(len(locations_toword.columns)):
-            row_cells[i].text = str(row[i])
-        image_cell = row_cells[-1]
-        image_cell.add_paragraph().add_run().add_picture('static/' + str(index) + '.jpg', width=Inches(4.0), height=Inches(1.8))
+        row_cells[0].text = str(locations_toword.iloc[i]['latitude (deg)'])
+        row_cells[1].text = str(locations_toword.iloc[i]['longitude (deg)'])
+        row_cells[2].text = str(locations_toword.iloc[i]['approx-address'])
+        cell = row_cells[3]
+        paragraph = cell.add_paragraph()
+        paragraph.add_run().add_picture('static/' + str(i) + '.jpg', width=Inches(2))
+
+        row_cells[4].text = str(cell_results.iloc[i]['distance'])
+        row_cells[5].text = url
+        cell = row_cells[6]
+        paragraph = cell.add_paragraph()
+        paragraph.add_run().add_picture('maps/' + str(i) + '.jpg', width=Inches(2))
 
     doc.save('output.docx')
 # needed as cache is saving the pano pages
@@ -342,6 +385,32 @@ def delete_pano_templates():
         if 'pano' in file_name:
             file_path = os.path.join(template_dir, file_name)
             os.remove(file_path)
+# gives hyperlink for google map locations
+def hyperlink():
+    hyperlink_list = []
+    locations = f'uploads/csv/{session.get("csv_filename")}'
+    for i in range(0, len(locations)):
+        lat1 = locations.iloc[i]['latitude (deg)']
+        long1 = locations.iloc[i]['longitude (deg)']
+        url = "https://www.google.com/maps/place/{},{}".format(lat1,long1)
+        hyperlink_list.append(url)
+    return hyperlink_list
+# gives static map images of locations
+def staticmaps():
+    locations_name = f'uploads/csv/{session.get("csv_filename")}'
+    locations = pd.read_csv(locations_name)
+    results = pd.read_csv('results.csv')
+    for i in range(0, len(locations)):
+        lat1 = locations.iloc[i]['latitude (deg)']
+        long1 = locations.iloc[i]['longitude (deg)']
+        lat2 = results.iloc[i]['latitude']
+        long2 = results.iloc[i]['longitude']
+        url = "https://maps.googleapis.com/maps/api/staticmap?center={},{}&size=640x640&markers=color:red|{},{}|&markers=color:blue|{},{}|&key=".format(lat1, long1, lat1, long1, lat2, long2)
+        response = requests.get(url,stream=True)
+        if response.status_code == 200:
+            with open(f"maps\{i}.jpg", "wb") as f:
+                response.raw.decode_content = True
+                shutil.copyfileobj(response.raw, f)
 # output so the user can have csv of closest cell-towers
 @app.route('/output_cell_towers', methods=['POST'])
 def output_cell_towers():
@@ -353,7 +422,7 @@ def output_cell_towers():
         coords_df = coords_df.drop(columns=['GPS week', 'GPS second', 'solution status', 'height (m)'])
     cell_results = pd.read_csv('results.csv')
     combined_results = pd.concat([coords_df, cell_results], axis=1)
-    combined_results.columns = ['Latitude', 'Longitude', 'Tower Index', ' Tower Latitude', ' Tower Longitude', ' Tower Geometry']
+    combined_results.columns = ['Latitude', 'Longitude', 'Tower Index', ' Tower Latitude', ' Tower Longitude', ' Tower Geometry', 'distance']
     combined_results.to_csv('combined_results.csv')
     return send_file('combined_results.csv', as_attachment=True)
 @app.route('/example')

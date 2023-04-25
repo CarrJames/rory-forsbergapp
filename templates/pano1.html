@@ -1,0 +1,321 @@
+{% extends "base.html" %}{% block content %}<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>latitude (deg)</th>
+      <th>longitude (deg)</th>
+      <th>approx-address</th>
+      <th>img_source</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>51.570120</td>
+      <td>0.126987</td>
+      <td>1145 High Rd, Romford RM6 4AT, UK</td>
+      <td><img src='{{ url_for('static', filename='0.jpg') }}'></td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>51.570191</td>
+      <td>0.127269</td>
+      <td>1149a High Rd, Romford RM6 4AT, UK</td>
+      <td><img src='{{ url_for('static', filename='1.jpg') }}'></td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>51.576667</td>
+      <td>0.176969</td>
+      <td>20 Yew Tree Gardens, Romford RM7 9AA, UK</td>
+      <td><img src='{{ url_for('static', filename='2.jpg') }}'></td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>51.576869</td>
+      <td>0.177038</td>
+      <td>Mawney Road, Romford, UK</td>
+      <td><img src='{{ url_for('static', filename='3.jpg') }}'></td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>51.575116</td>
+      <td>0.083624</td>
+      <td>1 Perrymans Farm Rd, Ilford IG2 7LB, UK</td>
+      <td><img src='{{ url_for('static', filename='4.jpg') }}'></td>
+    </tr>
+    <tr>
+      <th>5</th>
+      <td>51.575201</td>
+      <td>0.083630</td>
+      <td>1 Perrymans Farm Rd, Ilford IG2 7LB, UK</td>
+      <td><img src='{{ url_for('static', filename='5.jpg') }}'></td>
+    </tr>
+    <tr>
+      <th>6</th>
+      <td>51.575518</td>
+      <td>0.083589</td>
+      <td>Perrymans Farm Road (Stop NN), Ilford IG2 6BN, UK</td>
+      <td><img src='{{ url_for('static', filename='6.jpg') }}'></td>
+    </tr>
+    <tr>
+      <th>7</th>
+      <td>51.575626</td>
+      <td>0.083575</td>
+      <td>25 Horns Rd, Ilford IG2 6BN, UK</td>
+      <td><img src='{{ url_for('static', filename='7.jpg') }}'></td>
+    </tr>
+    <tr>
+      <th>8</th>
+      <td>51.575762</td>
+      <td>0.083561</td>
+      <td>25 Horns Rd, Ilford IG2 6BN, UK</td>
+      <td><img src='{{ url_for('static', filename='8.jpg') }}'></td>
+    </tr>
+    <tr>
+      <th>9</th>
+      <td>51.575914</td>
+      <td>0.083545</td>
+      <td>67 Horns Rd, Ilford IG2 6BN, UK</td>
+      <td><img src='{{ url_for('static', filename='9.jpg') }}'></td>
+    </tr>
+    <tr>
+      <th>10</th>
+      <td>51.517326</td>
+      <td>0.033824</td>
+      <td>24 Tollgate Rd, London E16 3LA, UK</td>
+      <td><img src='{{ url_for('static', filename='10.jpg') }}'></td>
+    </tr>
+    <tr>
+      <th>11</th>
+      <td>51.517289</td>
+      <td>0.033468</td>
+      <td>12 Tollgate Rd, London E16 3LA, UK</td>
+      <td><img src='{{ url_for('static', filename='11.jpg') }}'></td>
+    </tr>
+    <tr>
+      <th>12</th>
+      <td>51.517239</td>
+      <td>0.033189</td>
+      <td>2 Tollgate Rd, London E16 3LA, UK</td>
+      <td><img src='{{ url_for('static', filename='12.jpg') }}'></td>
+    </tr>
+    <tr>
+      <th>13</th>
+      <td>51.517155</td>
+      <td>0.032602</td>
+      <td>384 A13, London E13 8PF, UK</td>
+      <td><img src='{{ url_for('static', filename='13.jpg') }}'></td>
+    </tr>
+    <tr>
+      <th>14</th>
+      <td>51.517155</td>
+      <td>0.032602</td>
+      <td>384 A13, London E13 8PF, UK</td>
+      <td><img src='{{ url_for('static', filename='14.jpg') }}'></td>
+    </tr>
+    <tr>
+      <th>15</th>
+      <td>51.517155</td>
+      <td>0.032602</td>
+      <td>384 A13, London E13 8PF, UK</td>
+      <td><img src='{{ url_for('static', filename='15.jpg') }}'></td>
+    </tr>
+    <tr>
+      <th>16</th>
+      <td>51.517155</td>
+      <td>0.032602</td>
+      <td>384 A13, London E13 8PF, UK</td>
+      <td><img src='{{ url_for('static', filename='16.jpg') }}'></td>
+    </tr>
+    <tr>
+      <th>17</th>
+      <td>51.517155</td>
+      <td>0.032602</td>
+      <td>384 A13, London E13 8PF, UK</td>
+      <td><img src='{{ url_for('static', filename='17.jpg') }}'></td>
+    </tr>
+    <tr>
+      <th>18</th>
+      <td>51.517155</td>
+      <td>0.032602</td>
+      <td>384 A13, London E13 8PF, UK</td>
+      <td><img src='{{ url_for('static', filename='18.jpg') }}'></td>
+    </tr>
+    <tr>
+      <th>19</th>
+      <td>51.517155</td>
+      <td>0.032602</td>
+      <td>384 A13, London E13 8PF, UK</td>
+      <td><img src='{{ url_for('static', filename='19.jpg') }}'></td>
+    </tr>
+    <tr>
+      <th>20</th>
+      <td>51.517155</td>
+      <td>0.032602</td>
+      <td>384 A13, London E13 8PF, UK</td>
+      <td><img src='{{ url_for('static', filename='20.jpg') }}'></td>
+    </tr>
+    <tr>
+      <th>21</th>
+      <td>51.517155</td>
+      <td>0.032602</td>
+      <td>384 A13, London E13 8PF, UK</td>
+      <td><img src='{{ url_for('static', filename='21.jpg') }}'></td>
+    </tr>
+    <tr>
+      <th>22</th>
+      <td>51.502752</td>
+      <td>0.044108</td>
+      <td>Constance Street (Stop D), London E16 2AE, UK</td>
+      <td><img src='{{ url_for('static', filename='22.jpg') }}'></td>
+    </tr>
+    <tr>
+      <th>23</th>
+      <td>51.502717</td>
+      <td>0.044257</td>
+      <td>Constance Street (Stop D), London E16 2AE, UK</td>
+      <td><img src='{{ url_for('static', filename='23.jpg') }}'></td>
+    </tr>
+    <tr>
+      <th>24</th>
+      <td>51.600709</td>
+      <td>-0.016844</td>
+      <td>JX2M+77 London, UK</td>
+      <td><img src='{{ url_for('static', filename='24.jpg') }}'></td>
+    </tr>
+    <tr>
+      <th>25</th>
+      <td>51.600752</td>
+      <td>-0.016914</td>
+      <td>Crooked Billet, London E17 5AQ, UK</td>
+      <td><img src='{{ url_for('static', filename='25.jpg') }}'></td>
+    </tr>
+    <tr>
+      <th>26</th>
+      <td>51.600792</td>
+      <td>-0.016960</td>
+      <td>Crooked Billet, London E17 5AQ, UK</td>
+      <td><img src='{{ url_for('static', filename='26.jpg') }}'></td>
+    </tr>
+    <tr>
+      <th>27</th>
+      <td>51.600810</td>
+      <td>-0.016996</td>
+      <td>Crooked Billet, London E17 5AQ, UK</td>
+      <td><img src='{{ url_for('static', filename='27.jpg') }}'></td>
+    </tr>
+    <tr>
+      <th>28</th>
+      <td>51.600805</td>
+      <td>-0.017004</td>
+      <td>Crooked Billet, London E17 5AQ, UK</td>
+      <td><img src='{{ url_for('static', filename='28.jpg') }}'></td>
+    </tr>
+    <tr>
+      <th>29</th>
+      <td>51.600809</td>
+      <td>-0.017006</td>
+      <td>Crooked Billet, London E17 5AQ, UK</td>
+      <td><img src='{{ url_for('static', filename='29.jpg') }}'></td>
+    </tr>
+    <tr>
+      <th>30</th>
+      <td>51.524481</td>
+      <td>0.175315</td>
+      <td>135 New Rd, Rainham RM13 8ES, UK</td>
+      <td><img src='{{ url_for('static', filename='30.jpg') }}'></td>
+    </tr>
+    <tr>
+      <th>31</th>
+      <td>51.524481</td>
+      <td>0.175315</td>
+      <td>135 New Rd, Rainham RM13 8ES, UK</td>
+      <td><img src='{{ url_for('static', filename='31.jpg') }}'></td>
+    </tr>
+    <tr>
+      <th>32</th>
+      <td>51.524481</td>
+      <td>0.175315</td>
+      <td>135 New Rd, Rainham RM13 8ES, UK</td>
+      <td><img src='{{ url_for('static', filename='32.jpg') }}'></td>
+    </tr>
+    <tr>
+      <th>33</th>
+      <td>51.524481</td>
+      <td>0.175316</td>
+      <td>135 New Rd, Rainham RM13 8ES, UK</td>
+      <td><img src='{{ url_for('static', filename='33.jpg') }}'></td>
+    </tr>
+    <tr>
+      <th>34</th>
+      <td>51.524480</td>
+      <td>0.175316</td>
+      <td>135 New Rd, Rainham RM13 8ES, UK</td>
+      <td><img src='{{ url_for('static', filename='34.jpg') }}'></td>
+    </tr>
+    <tr>
+      <th>35</th>
+      <td>51.524480</td>
+      <td>0.175316</td>
+      <td>135 New Rd, Rainham RM13 8ES, UK</td>
+      <td><img src='{{ url_for('static', filename='35.jpg') }}'></td>
+    </tr>
+    <tr>
+      <th>36</th>
+      <td>51.524481</td>
+      <td>0.175316</td>
+      <td>135 New Rd, Rainham RM13 8ES, UK</td>
+      <td><img src='{{ url_for('static', filename='36.jpg') }}'></td>
+    </tr>
+    <tr>
+      <th>37</th>
+      <td>51.524482</td>
+      <td>0.175315</td>
+      <td>135 New Rd, Rainham RM13 8ES, UK</td>
+      <td><img src='{{ url_for('static', filename='37.jpg') }}'></td>
+    </tr>
+    <tr>
+      <th>38</th>
+      <td>51.540985</td>
+      <td>0.081238</td>
+      <td>63 Glenny Rd, Barking IG11 8QR, UK</td>
+      <td><img src='{{ url_for('static', filename='38.jpg') }}'></td>
+    </tr>
+    <tr>
+      <th>39</th>
+      <td>51.540940</td>
+      <td>0.081434</td>
+      <td>16 Bateman Cl, Barking IG11 8QR, UK</td>
+      <td><img src='{{ url_for('static', filename='39.jpg') }}'></td>
+    </tr>
+    <tr>
+      <th>40</th>
+      <td>51.540901</td>
+      <td>0.081620</td>
+      <td>81 A124, Barking IG11 8QB, UK</td>
+      <td><img src='{{ url_for('static', filename='40.jpg') }}'></td>
+    </tr>
+    <tr>
+      <th>41</th>
+      <td>51.540922</td>
+      <td>0.081801</td>
+      <td>81 A124, Barking IG11 8QB, UK</td>
+      <td><img src='{{ url_for('static', filename='41.jpg') }}'></td>
+    </tr>
+    <tr>
+      <th>42</th>
+      <td>51.569620</td>
+      <td>0.119271</td>
+      <td>30 Grove Rd, Romford RM6 4AQ, UK</td>
+      <td><img src='{{ url_for('static', filename='42.jpg') }}'></td>
+    </tr>
+    <tr>
+      <th>43</th>
+      <td>51.569620</td>
+      <td>0.119271</td>
+      <td>30 Grove Rd, Romford RM6 4AQ, UK</td>
+      <td><img src='{{ url_for('static', filename='43.jpg') }}'></td>
+    </tr>
+  </tbody>
+</table>{% endblock %}
