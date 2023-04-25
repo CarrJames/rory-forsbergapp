@@ -33,7 +33,7 @@ configure_uploads(app, csv_uploads)
 # Spatial Index configuration (doesnt work inside the cell-tower function)
 idx = index.Index()
 column_names = ['latitude', 'longitude']
-df = pd.read_csv(r'celltowers\234-revised.csv', names=column_names, header=None)
+df = pd.read_csv(r'celltowers\234.csv', names=column_names, header=None)
 # Converting it to a geopandas df
 gdf = gpd.GeoDataFrame(df, geometry=gpd.points_from_xy(df.longitude, df.latitude))
 # filling the spatial index with the geometry bounds
@@ -142,8 +142,9 @@ def celldist():
     # mapping it using folium 
     m = folium.Map(location=[52.7, -1.4], zoom_start=6)
     fg1 = folium.FeatureGroup(name='Cell Towers', show=True)
-    popup_str1 = f"Distance to closest point: {results.iloc[i]['distance']} miles"
+    
     for i, row in results.iterrows():
+        popup_str1 = f"Distance to closest point: {results['distance'].iloc[i]} miles"
         folium.Marker(location=[row['latitude'], row['longitude']],
                     tooltip=f"ID: {i}",
                     popup=popup_str1,
@@ -153,7 +154,7 @@ def celldist():
 # Create a feature group for the second set of markers (green color)
     fg2 = folium.FeatureGroup(name='Inputted', show=True)
     for i, row in coords_df.iterrows():
-        popup_str = f"Distance to closest tower: {results.iloc[i]['distance']} miles"
+        popup_str = f"Distance to closest tower: {results['distance'].iloc[i]} miles"
         folium.Marker(location=[row['latitude (deg)'], row['longitude (deg)']], 
                     tooltip=f"ID: {i}",
                     popup=popup_str,
@@ -169,8 +170,8 @@ def celldist():
 # email function using temporary email 
 @app.route('/send_email', methods=['POST'])
 def send_email():
-    email_sender = 'disformatter@gmail.com'
-    email_password = 'bqcwnzqvxhcryylq'
+    email_sender = '@gmail.com'
+    email_password = ''
     email_reciever = session.get('email')
 
     subject = 'Document of Formatted Addresses'
@@ -202,7 +203,8 @@ def empty_folders():
     temp_folder = app.config['TEMP_FOLDER'] = os.path.join(os.getcwd(), 'static')
     out_folder = app.config['OUT_FOLDER'] = os.path.join(os.getcwd(), 'outputs')
     s_images = app.config['S_IMAGES'] = os.path.join(os.getcwd(), 'standalone_images')
-    for folder in [upload_folder, temp_folder, out_folder, s_images]:
+    m_images = app.config['M_IMAGES'] = os.path.join(os.getcwd(), 'maps')
+    for folder in [upload_folder, temp_folder, out_folder, s_images, m_images]:
         for filename in os.listdir(folder):
             file_path = os.path.join(folder, filename)
             try:
@@ -214,7 +216,7 @@ def empty_folders():
 def formatted_address():#
     csv_filename = session.get('csv_filename')
     locations = pd.read_csv('uploads/csv/' + csv_filename)
-    gmaps = googlemaps.Client(key='AIzaSyBwP_5ZGFGEhgo1Zc9cxW5l2jjEz5-gd1o')
+    gmaps = googlemaps.Client(key='')
 
     approx_address = []
     # putting the lat and long to the api
@@ -249,7 +251,7 @@ def pano():
         address = locations_pano.iloc[i]['approx-address']
         for heading in headings:
             input_heading = heading
-            url = "https://maps.googleapis.com/maps/api/streetview?location={},{}&size=640x640&pitch=0&fov=90&heading={}&key=AIzaSyBwP_5ZGFGEhgo1Zc9cxW5l2jjEz5-gd1o".format(lat1, long1, input_heading)
+            url = "https://maps.googleapis.com/maps/api/streetview?location={},{}&size=640x640&pitch=0&fov=90&heading={}&key=".format(lat1, long1, input_heading)
             response = requests.get(url,stream=True)
             if response.status_code == 200:
                 with open(f"standalone_images/{heading}.jpg", "wb") as f:
@@ -277,6 +279,7 @@ def pano():
         width = 1280
         height = 320
         locations_pano['img_source'].iloc[i] = r"<img src='{{ url_for('static', filename=" + repr(filename) + ") }}'>"
+    get_closest_towers()
     staticmaps()
     to_word(csv_filename)
     # TO HTML
@@ -318,20 +321,18 @@ def find_closest_towers(coords_df, gdf, idx):
     return closest_towers
 # gets the distance of the closest towers
 def get_closest_towers():
-    csv_filename = session.get('csv_filename')
+    csv_filename = f'uploads/csv/{session.get("csv_filename")}'
     coords_df = pd.read_csv(csv_filename)
     result_df = find_closest_towers(coords_df, gdf, idx)
-    results = pd.DataFrame(result_df, columns=['latitude', 'longitude', 'geometry'])
+    results = pd.DataFrame(result_df, columns=['latitude', 'longitude', 'geometry', 'distance'])
     # finding the distance of each
     for i in range(0,len(coords_df)):
         loclat = coords_df.iloc[i]['latitude (deg)']
         loclong = coords_df.iloc[i]['longitude (deg)']
         celllat = results.iloc[i]['latitude']
         celllong = results.iloc[i]['longitude']
-        print('im the fucking error')
         new_column = geopy.distance.geodesic((loclat, loclong),(celllat, celllong)).miles
         results['distance'].iloc[i] = str(new_column)
-        print(new_column)
     results.to_csv('results.csv')
 # formatting document in a word format
 def to_word(csv_filename):
@@ -346,7 +347,7 @@ def to_word(csv_filename):
     doc = Document()
     table = doc.add_table(rows=1, cols=7)
     table.autofit = False
-    table.width = Inches(6.5)
+    table.width = Inches(9)
     table.alignment = WD_TABLE_ALIGNMENT.CENTER
     hdr_cells = table.rows[0].cells
     hdr_cells[0].text = 'Latitude (Deg)'
@@ -398,10 +399,13 @@ def hyperlink():
 def staticmaps():
     locations_name = f'uploads/csv/{session.get("csv_filename")}'
     locations = pd.read_csv(locations_name)
+    results = pd.read_csv('results.csv')
     for i in range(0, len(locations)):
         lat1 = locations.iloc[i]['latitude (deg)']
         long1 = locations.iloc[i]['longitude (deg)']
-        url = "https://maps.googleapis.com/maps/api/staticmap?center={},{}&size=640x640&zoom=15&&markers=color:red|{},{}|&key=AIzaSyBwP_5ZGFGEhgo1Zc9cxW5l2jjEz5-gd1o".format(lat1, long1, lat1, long1)
+        lat2 = results.iloc[i]['latitude']
+        long2 = results.iloc[i]['longitude']
+        url = "https://maps.googleapis.com/maps/api/staticmap?center={},{}&size=640x640&markers=color:red|{},{}|&markers=color:blue|{},{}|&key=".format(lat1, long1, lat1, long1, lat2, long2)
         response = requests.get(url,stream=True)
         if response.status_code == 200:
             with open(f"maps\{i}.jpg", "wb") as f:
