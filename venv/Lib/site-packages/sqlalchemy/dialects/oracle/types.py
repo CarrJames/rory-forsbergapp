@@ -97,7 +97,7 @@ class FLOAT(sqltypes.FLOAT):
         self.binary_precision = binary_precision
 
 
-class BINARY_DOUBLE(sqltypes.Float):
+class BINARY_DOUBLE(sqltypes.Double):
     __visit_name__ = "BINARY_DOUBLE"
 
 
@@ -159,8 +159,6 @@ class DATE(_OracleDateLiteralRender, sqltypes.DateTime):
     This type has no special Python behavior, except that it subclasses
     :class:`_types.DateTime`; this is to suit the fact that the Oracle
     ``DATE`` type supports a time value.
-
-    .. versionadded:: 0.9.4
 
     """
 

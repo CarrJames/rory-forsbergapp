@@ -8,7 +8,7 @@ python-docx
 Flask-Login
 requests
 googlemaps
-smtplib
+#smtplib
 pyopenssl
 folium
 Pillow
