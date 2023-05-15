@@ -33,11 +33,13 @@ configure_uploads(app, csv_uploads)
 # Spatial Index configuration (doesnt work inside the cell-tower function)
 idx = index.Index()
 column_names = ['latitude', 'longitude']
-df = pd.read_csv(r'celltowers\234.csv', names=column_names, header=None)
+df = pd.read_csv(r'celltowers\234-revised.csv', names=column_names, header=None)
 # Converting it to a geopandas df
 gdf = gpd.GeoDataFrame(df, geometry=gpd.points_from_xy(df.longitude, df.latitude))
 # filling the spatial index with the geometry bounds
-for i, tower in gdf.iterrows():
+for line_number, (i, tower) in enumerate( gdf.iterrows() ):
+    percent = 100*(line_number+1)/len(gdf)
+    print(f"Filling the spatial index with the geometry bounds: {round(percent,3)}%")
     if tower.geometry is not None:
         idx.insert(i, tower.geometry.bounds)
 
@@ -197,7 +199,7 @@ def send_email():
 def download():
     return send_file('output.docx', as_attachment=True)
 # empties the uploads folder and the static folder to reduce application size    
-@app.before_first_request
+#@app.before_first_request
 def empty_folders():
     upload_folder = app.config['UPLOAD_FOLDER'] = os.path.join(os.getcwd(), 'uploads', 'csv')
     temp_folder = app.config['TEMP_FOLDER'] = os.path.join(os.getcwd(), 'static')
@@ -216,7 +218,10 @@ def empty_folders():
 def formatted_address():#
     csv_filename = session.get('csv_filename')
     locations = pd.read_csv('uploads/csv/' + csv_filename)
-    gmaps = googlemaps.Client(key='')
+
+    with open("gm.key", "r") as f:
+        gmaps_key = f.read().strip()
+    gmaps = googlemaps.Client(key=gmaps_key)
 
     approx_address = []
     # putting the lat and long to the api
@@ -238,6 +243,10 @@ def formatted_address():#
     pano()
 # pano stitching using googles static api 
 def pano():
+
+    with open("gm.key", "r") as f:
+        gmaps_key = f.read().strip()
+
     global counter
     counter += 1
     csv_filename = session.get('csv_filename')
@@ -251,7 +260,7 @@ def pano():
         address = locations_pano.iloc[i]['approx-address']
         for heading in headings:
             input_heading = heading
-            url = "https://maps.googleapis.com/maps/api/streetview?location={},{}&size=640x640&pitch=0&fov=90&heading={}&key=".format(lat1, long1, input_heading)
+            url = "https://maps.googleapis.com/maps/api/streetview?location={},{}&size=640x640&pitch=0&fov=90&heading={}&key={}".format(lat1, long1, input_heading, gmaps_key)
             response = requests.get(url,stream=True)
             if response.status_code == 200:
                 with open(f"standalone_images/{heading}.jpg", "wb") as f:
@@ -281,7 +290,7 @@ def pano():
         locations_pano['img_source'].iloc[i] = r"<img src='{{ url_for('static', filename=" + repr(filename) + ") }}'>"
     get_closest_towers()
     staticmaps()
-    to_word(csv_filename)
+    #to_word(csv_filename)
     # TO HTML
     # dropping possible columns
     expected_columns = ['GPS week', 'GPS second', 'solution status', 'height (m)']
@@ -397,6 +406,10 @@ def hyperlink():
     return hyperlink_list
 # gives static map images of locations
 def staticmaps():
+
+    with open("gm.key", "r") as f:
+        gmaps_key = f.read().strip()
+
     locations_name = f'uploads/csv/{session.get("csv_filename")}'
     locations = pd.read_csv(locations_name)
     results = pd.read_csv('results.csv')
@@ -405,10 +418,11 @@ def staticmaps():
         long1 = locations.iloc[i]['longitude (deg)']
         lat2 = results.iloc[i]['latitude']
         long2 = results.iloc[i]['longitude']
-        url = "https://maps.googleapis.com/maps/api/staticmap?center={},{}&size=640x640&markers=color:red|{},{}|&markers=color:blue|{},{}|&key=".format(lat1, long1, lat1, long1, lat2, long2)
+        url = "https://maps.googleapis.com/maps/api/staticmap?center={},{}&size=640x640&markers=color:red|{},{}|&markers=color:blue|{},{}|&key={}".format(lat1, long1, lat1, long1, lat2, long2, gmaps_key)
         response = requests.get(url,stream=True)
+
         if response.status_code == 200:
-            with open(f"maps\{i}.jpg", "wb") as f:
+            with open(f"maps/{i}.jpg", "wb") as f:
                 response.raw.decode_content = True
                 shutil.copyfileobj(response.raw, f)
 # output so the user can have csv of closest cell-towers
