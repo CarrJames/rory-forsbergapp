@@ -216,7 +216,10 @@ def empty_folders():
 def formatted_address():#
     csv_filename = session.get('csv_filename')
     locations = pd.read_csv('uploads/csv/' + csv_filename)
-    gmaps = googlemaps.Client(key='')
+
+    with open("gm.key", "r") as f:
+        gmaps_key = f.read().strip()
+    gmaps = googlemaps.Client(key=gmaps_key)
 
     approx_address = []
     # putting the lat and long to the api
